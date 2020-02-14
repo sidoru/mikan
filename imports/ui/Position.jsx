@@ -1,7 +1,7 @@
 import React, { Component } from 'react';
 import { withTracker } from 'meteor/react-meteor-data';
 import { Player, Charactor, PlayerArray, Cell, CellArray, CellType, LineageClass, LineageClassInfo } from '../model/model';
-import Positions from '../api/positions';
+import { Positions } from '../api/collections';
 import PlayerRepository from '../repositories/PlayerRepository';
 import CellRepository from '../repositories/CellRepository';
 
@@ -13,8 +13,7 @@ class Position extends Component {
       positions: [], // [cellIndex , charactorId]
     };
 
-    console.log("constructor");
-
+    this.positionId = null;
     this.dragItem = null;
 
     const cellRepository = new CellRepository();
@@ -25,10 +24,16 @@ class Position extends Component {
   }
 
   render() {
-    console.log("reander");
+    const { params } = this.props.match;
+    this.positionId = params.id;
 
+    // ドラッグ中にデータが変わったらドラッグも中断
+    this.dragItem = null;
     const positions = this.props.positions ? this.props.positions : [];
+
+    console.log("render");
     console.log(positions);
+
     this.cells.clear();
     this.cells.applyInfo(positions, this.players);
 
@@ -51,6 +56,7 @@ class Position extends Component {
     );
   }
 
+  // セル描画
   renderCell = (cell, index) => {
     const className = ['box', this.cellTypeToClass(cell.cellType)].join(' ');
     return (
@@ -68,6 +74,7 @@ class Position extends Component {
     );
   }
 
+  // プレイヤー描画
   renderPlayer = player => {
     const charactors = player.charactors.map(this.renderCharactor);
 
@@ -81,6 +88,7 @@ class Position extends Component {
     );
   }
 
+  // キャラ描画
   renderCharactor = charactor => {
     const className = ['charactor-name', this.cellTypeToClass(charactor.cellType)].join(' ');
     return (<div key={charactor.Id}
@@ -180,15 +188,16 @@ class Position extends Component {
 
   // セル変更時
   onCellChanged() {
-    const newState = { positions: this.cells.getInfo() };
-    Positions.insert({ positions: newState.positions, createAt: new Date() });
+    const positions = this.cells.getInfo();
+    Meteor.call('positions.updatePositions', this.positionId, positions);
     //this.setState(newState);
   }
 }
 
-export default withTracker(() => {
-  console.log("withTracker");
-  const posrow = Positions.find({}, { sort: [["createAt", "desc"]], limit: 1 }).fetch()[0];
+export default withTracker(props => {
+  const { params } = props.match;
+  const posrow = Positions.findOne({_id:params.id});
+  
   return {
     positions: (posrow) ? posrow.positions : null,
   };

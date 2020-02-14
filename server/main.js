@@ -1,9 +1,6 @@
 import { Meteor } from 'meteor/meteor';
-import Positions from '../imports/api/positions';
-
-function insertLink(title, url) {
-  Links.insert({ title, url, createdAt: new Date() });
-}
+import { Positions } from '../imports/api/collections';
+import '../imports/api/methods';
 
 Meteor.startup(() => {
   Positions.remove({});
