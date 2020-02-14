@@ -11,6 +11,7 @@
     "@babel/runtime": "^7.7.6",
     "meteor-node-stubs": "^1.0.0",
     "moment": "^2.24.0",
+    "npm-update-all": "^1.0.1",
     "react": "^16.9.0",
     "react-dom": "^16.9.0",
     "react-moment": "^0.9.7",
