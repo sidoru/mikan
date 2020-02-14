@@ -1,0 +1,158 @@
+.container {
+}
+
+.cell-container {
+	width: 590px;
+	margin: 20px auto;
+}
+/* ひし形 */
+.box {
+	height: 40px;
+	width: 40px;
+	display: inline-block;
+	overflow: hidden;
+	margin-left: 0px;
+	margin-right: 16px;
+	border: 1px solid #777;
+	text-decoration: none;
+	transform: rotate(45deg);
+}
+/* ひし形の中の文字 */
+.box .text {
+	width: 40px;
+	height: 40px;
+	display: table-cell;
+	vertical-align: middle;
+	text-align: center;
+	font-size: 13px;
+  transform: rotate(-45deg);
+  line-height: 12px;
+  font-weight: bold;
+  margin-top: -100px;
+  color:#333;
+}
+
+.text-water-mark{
+  color:#AAA;
+}
+
+/* 11個目から19個ごとにマージン突っ込んで改行させる */
+.cell-container .box:nth-child(19n+11) {
+	margin-left: 29px;
+}
+/* 11個目から上にずらす（上のセルとセルの間に入る感じ） */
+.cell-container .box:nth-child(n+11) {
+	margin-top: -20px;
+}
+@supports (-ms-ime-align: auto) {
+	.cell-container .box:nth-child(n+11) {
+		margin-top: -17px;
+	}
+}
+
+.clear::after {
+	content: '';
+	display: table;
+	clear: both;
+}
+
+.block {
+	background: #999;
+}
+.target {
+	background: #F99;
+}
+.one-cell {
+	background: #F9F;
+}
+.two-cell {
+	background: #FC9;
+}
+.supporter {
+	background: #CCF;
+}
+.dancer {
+	background: #7F7;
+}
+
+.pl-container {
+	overflow: hidden;
+	width: 700px;
+  margin: auto;
+}
+.pl-container .player-container {
+	margin-right: 3px;
+  display: table;
+}
+.player-container .player-name {
+	width: 80px;
+  float: left;
+  text-align: right;
+	margin-right: 3px;
+  display: table-cell;
+	vertical-align: middle;
+}
+.player-container .charactor-name {
+	width: 100px;
+	float: left;
+	margin: 1px;
+	border: 2px solid #FFF;
+	border-radius: 10px;
+	text-align: center;
+	cursor: hand;
+}
+@keyframes border-accent {
+  from {
+    border: 2px solid #555;
+  }
+  to {
+    border: 2px solid #777;
+  }
+}
+.player-container .charactor-selected {
+  animation-name: border-accent;
+  animation-duration: 2s;
+  animation-delay: 0s;
+  animation-iteration-count: infinite;
+  animation-direction:alternate-reverse;
+}
+
+.info-container {
+  margin: auto;
+  display: table;
+	margin: -15px auto 0px auto;
+}
+.info-text {
+  font-size: 18px;
+  word-break: break-all;
+  display: table-cell;
+}
+
+.other-container {
+  margin:  5px auto;
+  display: table;
+}
+.url-text {
+  width: 500px;
+  height: 50px;
+  font-size: 10px;
+  word-break: break-all;
+  display: table-cell;
+}
+.url-copy-button {
+  display: table-cell;
+	vertical-align: top;
+}
+
+.breakdown-table {
+  border-collapse: collapse;
+}
+
+[draggable] {
+	-moz-user-select: none;
+	-khtml-user-select: none;
+	-webkit-user-select: none;
+	user-select: none;
+	-khtml-user-drag: element;
+	-webkit-user-drag: element;
+}
