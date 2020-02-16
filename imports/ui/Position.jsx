@@ -1,9 +1,15 @@
 import React, { Component } from 'react';
 import { withTracker } from 'meteor/react-meteor-data';
-import { Player, Charactor, PlayerArray, Cell, CellArray, CellType, LineageClass, LineageClassInfo } from '../model/model';
+import { Player, Charactor, PlayerArray, Cell, CellArray, CellType } from '../model/model';
 import { Positions } from '../api/collections';
 import PlayerRepository from '../repositories/PlayerRepository';
 import CellRepository from '../repositories/CellRepository';
+import ReactDOM from 'react-dom';
+import Paper from '@material-ui/core/Paper';
+import Tabs from '@material-ui/core/Tabs';
+import Tab from '@material-ui/core/Tab';
+import Typography from '@material-ui/core/Typography';
+import Box from '@material-ui/core/Box';
 
 class Position extends Component {
   constructor(props) {
@@ -11,6 +17,7 @@ class Position extends Component {
     this.state = {
       cells: new CellArray(),
       positions: [], // [cellIndex , charactorId]
+      tabIndex: 0,
     };
 
     this.positionId = null;
@@ -22,7 +29,7 @@ class Position extends Component {
     const playerPepos = new PlayerRepository();
     this.players = playerPepos.getPlayers();
   }
-
+  
   render() {
     const { params } = this.props.match;
     this.positionId = params.id;
@@ -31,7 +38,6 @@ class Position extends Component {
     this.dragItem = null;
     const positions = this.props.positions ? this.props.positions : [];
 
-    console.log("render");
     console.log(positions);
 
     this.cells.clear();
@@ -39,13 +45,54 @@ class Position extends Component {
 
     const boxCharactorCount = this.cells.occupies.filter(c => c.charactor.canBox).length;
     const totalCharactorCount = this.cells.occupies.length;
+    function TabPanel(props) {
+      const { children, value, index, ...other } = props;
+    
+      return (
+        <Typography
+          component="div"
+          role="tabpanel"
+          hidden={value !== index}
+          id={`nav-tabpanel-${index}`}
+          aria-labelledby={`nav-tab-${index}`}
+          {...other}
+        >
+          {value === index && <Box p={3}>{children}</Box>}
+        </Typography>
+      );
+    }
+    const handleChange = (event, newValue) => {
+      this.setState({ tabIndex: newValue })
+    };
+
     return (
       <div>
+        <Paper square>
+          <Tabs
+            value={this.state.tabIndex}
+            onChange={handleChange}
+            indicatorColor="primary"
+            textColor="primary">
+            <Tab label="1回目">
+            </Tab>
+            <Tab label="2回目">
+            </Tab>
+          </Tabs>
+        </Paper>
+        <TabPanel value={this.state.tabIndex} index={0}>
         <div className="container">
           <div className="cell-container clear">
             {this.cells.map(this.renderCell)}
           </div>
         </div>
+        </TabPanel>
+        <TabPanel value={this.state.tabIndex} index={1}>
+        <div className="container">
+          <div className="cell-container clear">
+            {this.cells.map(this.renderCell)}
+          </div>
+        </div>
+        </TabPanel>
         <div className="info-container">
           <div className="info-text">{`Box:${boxCharactorCount} Total:${totalCharactorCount}`}</div>
         </div>
@@ -91,6 +138,7 @@ class Position extends Component {
   // キャラ描画
   renderCharactor = charactor => {
     const className = ['charactor-name', this.cellTypeToClass(charactor.cellType)].join(' ');
+
     return (<div key={charactor.Id}
       className={className}
       draggable
@@ -195,9 +243,10 @@ class Position extends Component {
 }
 
 export default withTracker(props => {
+  console.log(props);
   const { params } = props.match;
-  const posrow = Positions.findOne({_id:params.id});
-  
+  const posrow = Positions.findOne({ _id: params.id });
+
   return {
     positions: (posrow) ? posrow.positions : null,
   };
