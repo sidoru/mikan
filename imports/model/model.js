@@ -59,6 +59,8 @@ export class Charactor {
     this.cellType = cellType;
     this.levelIndex = levelIndex;
     this.canBox = canBox;
+
+    this.entryRound = 0;// 0は不参加
   }
 
   get Id() { return this.name; }
@@ -118,13 +120,16 @@ export class CellArray extends Array {
     return results;
   };
 
-  applyInfo = (info, players) => {
+  applyInfo = (info, players, round) => {
+    this.clear();
+
     for (let [index, charactorId] of Object.entries(info)) {
       const charactor = players.findCharactorById(charactorId);
       if (charactor == null) {
         continue;
       }
 
+      charactor.entryRound = round;
       this[index].charactor = charactor;
     }
   };

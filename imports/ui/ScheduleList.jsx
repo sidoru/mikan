@@ -2,9 +2,10 @@ import React, { Component } from 'react';
 import moment from 'moment';
 import Moment from 'react-moment';
 import { withTracker } from 'meteor/react-meteor-data';
-import { Positions } from '../api/collections';
+import { Schedules } from '../api/collections';
+import { Link } from 'react-router-dom';
 
-class PositionList extends Component {
+class ScheduleList extends Component {
   constructor(props) {
     super(props);
     this.state = {
@@ -14,11 +15,8 @@ class PositionList extends Component {
   }
 
   render() {
-    const positions = this.props.positions ? this.props.positions : [];
+    const schedules = this.props.schedules ? this.props.schedules : [];
 
-    console.log("render");
-    console.log(positions);
-    
     return (
       <div>
         <div>position list</div>
@@ -28,16 +26,16 @@ class PositionList extends Component {
           <input type="submit" value="Add" />
         </form>
         <ul>
-          {positions.map(this.renderPosition)}
+          {schedules.map(this.renderSchedule)}
         </ul>
       </div>
     );
   }
 
-  renderPosition(position, index) {
+  renderSchedule(schedule, index) {
     return (
       <li key={index}>
-        <a href={`position/${position._id}`}><Moment format="YYYY/MM/DD">{position.executionDate}</Moment> {position.name}</a>
+        <Link to={`position/${schedule._id}`}><Moment format="YYYY/MM/DD">{schedule.executionDate}</Moment> {schedule.name}</Link>
       </li>
     );
   }
@@ -45,13 +43,16 @@ class PositionList extends Component {
   handleAddPosition(e) {
     e.preventDefault();
 
-    const exeDate= new Date(this.state.executionDate);
-    Meteor.call('positions.insert', exeDate, this.state.name);
+    const exeDate = new Date(this.state.executionDate);
+    Meteor.call('schedules.insert', exeDate, this.state.name);
   }
 }
 
 export default withTracker(() => {
-  return {
-    positions: Positions.find({}, { sort: [["executionDate", "desc"]] }).fetch(),
-  };
-})(PositionList);
+  let schedules;
+  if (Meteor.subscribe('schedules').ready()) {
+    schedules = Schedules.find({}, { sort: [["executionDate", "desc"], ["updateAt", "desc"]] }).fetch();
+  }
+
+  return { schedules };
+})(ScheduleList);

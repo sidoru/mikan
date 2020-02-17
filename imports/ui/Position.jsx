@@ -1,53 +1,69 @@
 import React, { Component } from 'react';
 import { withTracker } from 'meteor/react-meteor-data';
-import { Player, Charactor, PlayerArray, Cell, CellArray, CellType } from '../model/model';
-import { Positions } from '../api/collections';
-import PlayerRepository from '../repositories/PlayerRepository';
-import CellRepository from '../repositories/CellRepository';
+
 import ReactDOM from 'react-dom';
 import Paper from '@material-ui/core/Paper';
 import Tabs from '@material-ui/core/Tabs';
 import Tab from '@material-ui/core/Tab';
 import Typography from '@material-ui/core/Typography';
 import Box from '@material-ui/core/Box';
+import Badge from '@material-ui/core/Badge';
+
+import PlayerRepository from '../repositories/PlayerRepository';
+import CellRepository from '../repositories/CellRepository';
+import { Player, Charactor, PlayerArray, Cell, CellArray, CellType } from '../model/model';
+import { Positions } from '../api/collections';
 
 class Position extends Component {
   constructor(props) {
     super(props);
     this.state = {
-      cells: new CellArray(),
       positions: [], // [cellIndex , charactorId]
       tabIndex: 0,
     };
 
-    this.positionId = null;
+    console.log("constructor");
+    this.scheduleId = null;
     this.dragItem = null;
 
     const cellRepository = new CellRepository();
-    this.cells = cellRepository.getCells();
+    this.assortedCells = [cellRepository.getCells(), cellRepository.getCells()];
+
+    this.cells = new CellArray();
+    for (let cell of this.assortedCells.reduce((x, y) => x.concat(y), [])) {
+      this.cells.push(cell);
+    }
 
     const playerPepos = new PlayerRepository();
     this.players = playerPepos.getPlayers();
   }
-  
+
   render() {
     const { params } = this.props.match;
-    this.positionId = params.id;
+    this.scheduleId = params.scheduleId;
 
     // ドラッグ中にデータが変わったらドラッグも中断
     this.dragItem = null;
-    const positions = this.props.positions ? this.props.positions : [];
+    const assortedPositions = this.props.positions ? this.props.positions : [[], []];
 
-    console.log(positions);
+    console.log(assortedPositions);
 
-    this.cells.clear();
-    this.cells.applyInfo(positions, this.players);
+    for (let i in this.assortedCells) {
+      if (assortedPositions.length <= i) {
+        break;
+      }
+
+      const partCells = this.assortedCells[i];
+      const partPositions = assortedPositions[i];
+      const round = Number(i) + 1;
+      partCells.applyInfo(partPositions, this.players, round);
+    }
 
     const boxCharactorCount = this.cells.occupies.filter(c => c.charactor.canBox).length;
     const totalCharactorCount = this.cells.occupies.length;
-    function TabPanel(props) {
+    const TabPanel = props => {
       const { children, value, index, ...other } = props;
-    
+
       return (
         <Typography
           component="div"
@@ -61,37 +77,36 @@ class Position extends Component {
         </Typography>
       );
     }
-    const handleChange = (event, newValue) => {
-      this.setState({ tabIndex: newValue })
+
+    const CellContainer = props => {
+      const { cells } = props;
+
+      return (
+        <div className="cell-container clear">
+          {cells.map(this.renderCell)}
+        </div>
+      );
     };
+
 
     return (
       <div>
         <Paper square>
           <Tabs
             value={this.state.tabIndex}
-            onChange={handleChange}
+            onChange={this.handleTabChange}
             indicatorColor="primary"
-            textColor="primary">
-            <Tab label="1回目">
-            </Tab>
-            <Tab label="2回目">
-            </Tab>
+            textColor="primary"
+            centered>
+            <Tab label="1回目" />
+            <Tab label="2回目" />
           </Tabs>
         </Paper>
         <TabPanel value={this.state.tabIndex} index={0}>
-        <div className="container">
-          <div className="cell-container clear">
-            {this.cells.map(this.renderCell)}
-          </div>
-        </div>
+          <CellContainer cells={this.assortedCells[0]} />
         </TabPanel>
         <TabPanel value={this.state.tabIndex} index={1}>
-        <div className="container">
-          <div className="cell-container clear">
-            {this.cells.map(this.renderCell)}
-          </div>
-        </div>
+          <CellContainer cells={this.assortedCells[1]} />
         </TabPanel>
         <div className="info-container">
           <div className="info-text">{`Box:${boxCharactorCount} Total:${totalCharactorCount}`}</div>
@@ -102,6 +117,10 @@ class Position extends Component {
       </div >
     );
   }
+
+  handleTabChange = (event, newValue) => {
+    this.setState({ tabIndex: newValue })
+  };
 
   // セル描画
   renderCell = (cell, index) => {
@@ -138,15 +157,22 @@ class Position extends Component {
   // キャラ描画
   renderCharactor = charactor => {
     const className = ['charactor-name', this.cellTypeToClass(charactor.cellType)].join(' ');
+    const color = (charactor.entryRound == 1) ? "primary" : "secondary";
 
-    return (<div key={charactor.Id}
-      className={className}
-      draggable
-      onDoubleClick={e => this.handleCharactorDoubleClick(charactor)}
-      onDragStart={e => this.handleCharactorDragstart(e, charactor)}
-    >
-      {charactor.name}
-    </div>
+    return (
+      <Badge key={charactor.Id}
+        badgeContent={charactor.entryRound}
+        color={color}
+        overlap="circle"
+        anchorOrigin={{ vertical: 'top', horizontal: 'left', }}>
+        <div
+          className={className}
+          draggable
+          onDoubleClick={e => this.handleCharactorDoubleClick(charactor)}
+          onDragStart={e => this.handleCharactorDragstart(e, charactor)}>
+          {charactor.name}
+        </div>
+      </Badge>
     );
   }
 
@@ -161,13 +187,14 @@ class Position extends Component {
 
   // キャラクリック
   handleCharactorDoubleClick = charactor => {
+    const currentCells = this.assortedCells[this.state.tabIndex];
     if (this.cells.occupies.some(x => x.charactor.Id == charactor.Id)) {
       return;
     }
 
-    let target = this.cells.vacants.find(x => x.cellType == charactor.cellType);
+    let target = currentCells.vacants.find(x => x.cellType == charactor.cellType);
     if (target == null) {
-      target = this.cells.vacants.find(x => x);
+      target = currentCells.vacants.find(x => x);
     }
 
     if (target != null) {
@@ -236,18 +263,25 @@ class Position extends Component {
 
   // セル変更時
   onCellChanged() {
-    const positions = this.cells.getInfo();
-    Meteor.call('positions.updatePositions', this.positionId, positions);
+    console.log("onCellChanged");
+    const positions = this.assortedCells.map(c => c.getInfo());
+    Meteor.call('schedules.savePosition', this.scheduleId, positions);
     //this.setState(newState);
   }
 }
 
 export default withTracker(props => {
-  console.log(props);
   const { params } = props.match;
-  const posrow = Positions.findOne({ _id: params.id });
 
-  return {
-    positions: (posrow) ? posrow.positions : null,
-  };
+  console.log("withTracker da");
+  let positions;
+  if (Meteor.subscribe('schedulePosition', params.scheduleId).ready()) {
+    console.log("withTracker subsc");
+    position = Meteor.call("schedules.getPosition", params.scheduleId);
+    if (position != null) {
+      positions = position.positions;
+    }
+  }
+
+  return { positions };
 })(Position);
