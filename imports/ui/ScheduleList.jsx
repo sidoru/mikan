@@ -35,7 +35,7 @@ class ScheduleList extends Component {
   renderSchedule(schedule, index) {
     return (
       <li key={index}>
-        <Link to={`position/${schedule._id}`}><Moment format="YYYY/MM/DD">{schedule.executionDate}</Moment> {schedule.name}</Link>
+        <Link to={`/schedules/${schedule._id}/position`}><Moment format="MM月DD日">{schedule.executionDate}</Moment> {schedule.name}</Link>
       </li>
     );
   }

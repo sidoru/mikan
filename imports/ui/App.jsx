@@ -36,7 +36,7 @@ class App extends Component {
           <div className="content">
             <Switch>
               <Route exact path="/" component={ScheduleList} />
-              <Route exact path="/position/:scheduleId" component={Position} />
+              <Route exact path="/schedules/:scheduleId/position" component={Position} />
               <Route exact path="/hello" component={Hello} />
               <Route exact component={ScheduleList} />
             </Switch>

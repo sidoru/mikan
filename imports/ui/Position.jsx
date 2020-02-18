@@ -8,11 +8,12 @@ import Tab from '@material-ui/core/Tab';
 import Typography from '@material-ui/core/Typography';
 import Box from '@material-ui/core/Box';
 import Badge from '@material-ui/core/Badge';
+import Moment from 'react-moment';
 
 import PlayerRepository from '../repositories/PlayerRepository';
 import CellRepository from '../repositories/CellRepository';
-import { Player, Charactor, PlayerArray, Cell, CellArray, CellType } from '../model/model';
-import { Positions } from '../api/collections';
+import { PositionBinder, Player, Charactor, PlayerArray, Cell, CellArray, CellType } from '../model/model';
+import { Schedules } from '../api/collections';
 
 class Position extends Component {
   constructor(props) {
@@ -39,25 +40,16 @@ class Position extends Component {
   }
 
   render() {
-    const { params } = this.props.match;
-    this.scheduleId = params.scheduleId;
-
-    // ドラッグ中にデータが変わったらドラッグも中断
+    // ドラッグ中にデータが変わったらドラッグ中断
     this.dragItem = null;
-    const assortedPositions = this.props.positions ? this.props.positions : [[], []];
 
-    console.log(assortedPositions);
-
-    for (let i in this.assortedCells) {
-      if (assortedPositions.length <= i) {
-        break;
-      }
-
-      const partCells = this.assortedCells[i];
-      const partPositions = assortedPositions[i];
-      const round = Number(i) + 1;
-      partCells.applyInfo(partPositions, this.players, round);
+    this.schedule = this.props.schedule;
+    if (this.schedule == null) {
+      return (<div></div>);
     }
+
+    const executionDate = this.schedule.executionDate;
+    PositionBinder.apply(this.players, this.assortedCells, this.schedule);
 
     const boxCharactorCount = this.cells.occupies.filter(c => c.charactor.canBox).length;
     const totalCharactorCount = this.cells.occupies.length;
@@ -88,19 +80,29 @@ class Position extends Component {
       );
     };
 
-
+    const styles = {
+      roundTitle: {
+        backgroundColor:"red",
+        borderRadius: "50%",
+        lineHeight:"0px",
+      }
+    };
     return (
       <div>
         <Paper square>
-          <Tabs
-            value={this.state.tabIndex}
-            onChange={this.handleTabChange}
-            indicatorColor="primary"
-            textColor="primary"
-            centered>
-            <Tab label="1回目" />
-            <Tab label="2回目" />
-          </Tabs>
+          <div style={{ display: "inline-block", margin: "2px 20px" }}>
+            <Moment format="MM月DD日">{executionDate}</Moment>
+          </div>
+          <div style={{ display: "inline-block" }}>
+            <Tabs
+              value={this.state.tabIndex}
+              onChange={this.handleTabChange}
+              indicatorColor="primary"
+              textColor="primary">
+              <Tab label="1回目" />
+              <Tab label="2回目" />
+            </Tabs>
+          </div>
         </Paper>
         <TabPanel value={this.state.tabIndex} index={0}>
           <CellContainer cells={this.assortedCells[0]} />
@@ -263,9 +265,8 @@ class Position extends Component {
 
   // セル変更時
   onCellChanged() {
-    console.log("onCellChanged");
     const positions = this.assortedCells.map(c => c.getInfo());
-    Meteor.call('schedules.savePosition', this.scheduleId, positions);
+    Meteor.call('schedules.updatePosition', this.schedule._id, positions);
     //this.setState(newState);
   }
 }
@@ -273,15 +274,10 @@ class Position extends Component {
 export default withTracker(props => {
   const { params } = props.match;
 
-  console.log("withTracker da");
-  let positions;
-  if (Meteor.subscribe('schedulePosition', params.scheduleId).ready()) {
-    console.log("withTracker subsc");
-    position = Meteor.call("schedules.getPosition", params.scheduleId);
-    if (position != null) {
-      positions = position.positions;
-    }
+  let schedule;
+  if (Meteor.subscribe('schedule', params.scheduleId).ready()) {
+    schedule = Schedules.findOne({ _id: params.scheduleId });
   }
 
-  return { positions };
+  return { schedule };
 })(Position);
