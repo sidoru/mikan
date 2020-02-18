@@ -1,5 +1,5 @@
 
-import { Player, Charactor, PlayerArray, CellType, LineageClassInfo } from '../model/model';
+import { Player, Charactor, PlayerArray, CellType, LineageClassInfo } from '../model/models';
 
 export default class {
   playerTsv = `

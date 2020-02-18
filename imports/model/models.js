@@ -79,6 +79,14 @@ export class PlayerArray extends Array {
 
     return null;
   };
+
+  clearCharactorAttendance = () => {
+    for (let p of this) {
+      for (let c of p.charactors) {
+        c.entryRound = 0;
+      }
+    }
+  };
 }
 
 export class Cell {
@@ -119,18 +127,43 @@ export class CellArray extends Array {
 
     return results;
   };
+}
 
-  applyInfo = (info, players, round) => {
-    this.clear();
+export class PositionBinder {
+  static apply(playerArray, assortedCells, schedule) {
+    if (schedule == null) {
+      return;
+    }
 
-    for (let [index, charactorId] of Object.entries(info)) {
-      const charactor = players.findCharactorById(charactorId);
-      if (charactor == null) {
-        continue;
+    const assortedPositions = schedule.positions ? schedule.positions : [[], []];
+
+    // ラウンド毎に配置適用
+    const applyCells = (cellArray, positions, round) => {
+      cellArray.clear();
+
+      for (let [index, charactorId] of Object.entries(positions)) {
+        const charactor = playerArray.findCharactorById(charactorId);
+        if (charactor == null) {
+          continue;
+        }
+
+        charactor.entryRound = round;
+        cellArray[index].charactor = charactor;
+      }
+    }
+
+    playerArray.clearCharactorAttendance();
+
+    // 全セル全配置のデータをラウンド毎に分けて処理
+    for (let i in assortedCells) {
+      if (assortedPositions.length <= i) {
+        break;
       }
 
-      charactor.entryRound = round;
-      this[index].charactor = charactor;
+      const partCells = assortedCells[i];
+      const partPositions = assortedPositions[i];
+      const round = Number(i) + 1;
+      applyCells(partCells, partPositions, round);
     }
-  };
+  }
 }

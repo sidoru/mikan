@@ -1,5 +1,5 @@
 
-import { Cell, CellType, CellArray } from '../model/model';
+import { Cell, CellType, CellArray } from '../model/models';
 
 export default class {
   getCells() {

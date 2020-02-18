@@ -1,19 +1,20 @@
 import React, { Component } from 'react';
 import { withTracker } from 'meteor/react-meteor-data';
 
-import ReactDOM from 'react-dom';
 import Paper from '@material-ui/core/Paper';
 import Tabs from '@material-ui/core/Tabs';
 import Tab from '@material-ui/core/Tab';
-import Typography from '@material-ui/core/Typography';
-import Box from '@material-ui/core/Box';
 import Badge from '@material-ui/core/Badge';
 import Moment from 'react-moment';
 
 import PlayerRepository from '../repositories/PlayerRepository';
 import CellRepository from '../repositories/CellRepository';
-import { PositionBinder, Player, Charactor, PlayerArray, Cell, CellArray, CellType } from '../model/model';
+import { PositionBinder, Charactor, Cell, CellArray, CellType } from '../model/models';
 import { Schedules } from '../api/collections';
+import PositionBoardModel from '../model/PositionBoardModel';
+
+
+import TabPanel from './TabPanel.jsx';
 
 class Position extends Component {
   constructor(props) {
@@ -23,20 +24,9 @@ class Position extends Component {
       tabIndex: 0,
     };
 
-    console.log("constructor");
-    this.scheduleId = null;
     this.dragItem = null;
 
-    const cellRepository = new CellRepository();
-    this.assortedCells = [cellRepository.getCells(), cellRepository.getCells()];
-
-    this.cells = new CellArray();
-    for (let cell of this.assortedCells.reduce((x, y) => x.concat(y), [])) {
-      this.cells.push(cell);
-    }
-
-    const playerPepos = new PlayerRepository();
-    this.players = playerPepos.getPlayers();
+    this.model = new PositionBoardModel();
   }
 
   render() {
@@ -48,50 +38,42 @@ class Position extends Component {
       return (<div></div>);
     }
 
-    const executionDate = this.schedule.executionDate;
-    PositionBinder.apply(this.players, this.assortedCells, this.schedule);
-
-    const boxCharactorCount = this.cells.occupies.filter(c => c.charactor.canBox).length;
-    const totalCharactorCount = this.cells.occupies.length;
-    const TabPanel = props => {
-      const { children, value, index, ...other } = props;
-
-      return (
-        <Typography
-          component="div"
-          role="tabpanel"
-          hidden={value !== index}
-          id={`nav-tabpanel-${index}`}
-          aria-labelledby={`nav-tab-${index}`}
-          {...other}
-        >
-          {value === index && <Box p={3}>{children}</Box>}
-        </Typography>
-      );
-    }
+    this.model.applySchedule(this.schedule);
 
     const CellContainer = props => {
       const { cells } = props;
 
       return (
         <div className="cell-container clear">
-          {cells.map(this.renderCell)}
+          {cells.map((cell, index) => {
+            return <Cell key={index} cell={cell} />
+          })}
         </div>
       );
     };
 
-    const styles = {
-      roundTitle: {
-        backgroundColor:"red",
-        borderRadius: "50%",
-        lineHeight:"0px",
-      }
+    const Cell = props => {
+      const { cell } = props;
+      const className = ['box', this.cellTypeToClass(cell.cellType)].join(' ');
+      return (
+        <div className={className}
+          draggable onDoubleClick={e => this.handleCellDoubleClick(cell)}
+          onDragStart={e => this.handleCellDragstart(e, cell)}
+          onDrop={e => this.handleCellDrop(e, cell)}
+          onDragOver={this.handleCellDragover}
+        >
+          <div className="text">
+            {cell.text}
+          </div>
+        </div>
+      );
     };
+
     return (
       <div>
         <Paper square>
           <div style={{ display: "inline-block", margin: "2px 20px" }}>
-            <Moment format="MM月DD日">{executionDate}</Moment>
+            <Moment format="MM月DD日">{this.model.executionDate}</Moment>
           </div>
           <div style={{ display: "inline-block" }}>
             <Tabs
@@ -105,42 +87,23 @@ class Position extends Component {
           </div>
         </Paper>
         <TabPanel value={this.state.tabIndex} index={0}>
-          <CellContainer cells={this.assortedCells[0]} />
+          <CellContainer cells={this.model.assortedCells[0]} />
         </TabPanel>
         <TabPanel value={this.state.tabIndex} index={1}>
-          <CellContainer cells={this.assortedCells[1]} />
+          <CellContainer cells={this.model.assortedCells[1]} />
         </TabPanel>
-        <div className="info-container">
-          <div className="info-text">{`Box:${boxCharactorCount} Total:${totalCharactorCount}`}</div>
-        </div>
         <div className="pl-container">
-          {this.players.map(this.renderPlayer)}
+          {this.model.players.map(this.renderPlayer)}
         </div>
       </div >
     );
   }
 
-  handleTabChange = (event, newValue) => {
-    this.setState({ tabIndex: newValue })
-  };
-
-  // セル描画
-  renderCell = (cell, index) => {
-    const className = ['box', this.cellTypeToClass(cell.cellType)].join(' ');
-    return (
-      <div key={index}
-        className={className}
-        draggable onDoubleClick={e => this.handleCellDoubleClick(cell)}
-        onDragStart={e => this.handleCellDragstart(e, cell)}
-        onDrop={e => this.handleCellDrop(e, cell)}
-        onDragOver={this.handleCellDragover}
-      >
-        <div className="text">
-          {cell.text}
-        </div>
-      </div>
-    );
-  }
+  renderActorCounts = actorCount => (
+    <div className="info-container">
+      <div className="info-text">{`Box:${actorCount.box} Total:${actorCount.total}`}</div>
+    </div>
+  );
 
   // プレイヤー描画
   renderPlayer = player => {
@@ -187,29 +150,15 @@ class Position extends Component {
             ct == CellType.SUPPORTER ? "supporter" :
               ct == CellType.DANCER ? "dancer" : "";
 
+  // タブ切替
+  handleTabChange = (event, newValue) => {
+    this.setState({ tabIndex: newValue })
+  };
+
   // キャラクリック
   handleCharactorDoubleClick = charactor => {
-    const currentCells = this.assortedCells[this.state.tabIndex];
-    if (this.cells.occupies.some(x => x.charactor.Id == charactor.Id)) {
-      return;
-    }
-
-    let target = currentCells.vacants.find(x => x.cellType == charactor.cellType);
-    if (target == null) {
-      target = currentCells.vacants.find(x => x);
-    }
-
-    if (target != null) {
-      target.charactor = charactor;
+    if (this.model.entryCharactor(charactor, this.state.tabIndex)) {
       this.onCellChanged();
-    }
-  }
-
-  // 対象セルリストのキャラ削除
-  clearExistedCell = charactor => {
-    const existedCell = this.cells.find(x => x.charactor === charactor);
-    if (existedCell != null) {
-      existedCell.clear();
     }
   }
 
@@ -237,24 +186,18 @@ class Position extends Component {
   handleCellDrop = (e, dstCell) => {
     e.stopPropagation();
 
+    let changed = false;
     if (this.dragItem instanceof Cell) {
-      const srcCell = this.dragItem;
-
-      // 両方のセルが空っぽでも何もしなくて良い
-      if (srcCell == dstCell || srcCell.charactor == dstCell.charactor) {
-        return;
-      }
-
-      srcCell.swap(dstCell);
+      changed = this.model.swapCell(this.dragItem, dstCell);
 
     } else if (this.dragItem instanceof Charactor) {
-      const charactor = this.dragItem;
-      this.clearExistedCell(charactor);
-      dstCell.charactor = charactor;
+      changed = this.model.allocateCharactor(this.dragItem, dstCell);
     }
 
     this.dragItem = null;
-    this.onCellChanged();
+    if (changed) {
+      this.onCellChanged();
+    }
   }
 
   // セルダブルクリック
@@ -265,8 +208,8 @@ class Position extends Component {
 
   // セル変更時
   onCellChanged() {
-    const positions = this.assortedCells.map(c => c.getInfo());
-    Meteor.call('schedules.updatePosition', this.schedule._id, positions);
+    const position = this.model.getPostionInfo();
+    Meteor.call('schedules.updatePosition', this.schedule._id, position);
     //this.setState(newState);
   }
 }
