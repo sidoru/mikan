@@ -7,9 +7,7 @@ import Tab from '@material-ui/core/Tab';
 import Badge from '@material-ui/core/Badge';
 import Moment from 'react-moment';
 
-import PlayerRepository from '../repositories/PlayerRepository';
-import CellRepository from '../repositories/CellRepository';
-import { PositionBinder, Charactor, Cell, CellArray, CellType } from '../model/models';
+import { CharactorModel, CellModel, CellType } from '../model/models';
 import { Schedules } from '../api/collections';
 import PositionBoardModel from '../model/PositionBoardModel';
 
@@ -40,18 +38,20 @@ class Position extends Component {
 
     this.model.applySchedule(this.schedule);
 
+    // セルコンテナ
     const CellContainer = props => {
       const { cells } = props;
 
       return (
         <div className="cell-container clear">
-          {cells.map((cell, index) => {
-            return <Cell key={index} cell={cell} />
-          })}
+          {cells.map((cell, index) => 
+            <Cell key={index} cell={cell} />
+          )}
         </div>
       );
     };
 
+    // セル
     const Cell = props => {
       const { cell } = props;
       const className = ['box', this.cellTypeToClass(cell.cellType)].join(' ');
@@ -66,6 +66,47 @@ class Position extends Component {
             {cell.text}
           </div>
         </div>
+      );
+    };
+
+    // プレイヤー
+    const Player = props => {
+      const { player } = props;
+
+      return (
+        <div key={player.Id} className="player-container">
+          <div className="player-name">
+            {player.name}
+          </div>
+
+          {player.charactors.map((charactor, index) =>
+            <Charactor key={index} charactor={charactor} />
+          )}
+        </div >
+      );
+    };
+
+    // キャラ
+    const Charactor = props => {
+      const { charactor } = props;
+
+      const className = ['charactor-name', this.cellTypeToClass(charactor.cellType)].join(' ');
+      const color = (charactor.entryRound == 1) ? "primary" : "secondary";
+
+      return (
+        <Badge key={charactor.Id}
+          badgeContent={charactor.entryRound}
+          color={color}
+          overlap="circle"
+          anchorOrigin={{ vertical: 'top', horizontal: 'left', }}>
+          <div
+            className={className}
+            draggable
+            onDoubleClick={e => this.handleCharactorDoubleClick(charactor)}
+            onDragStart={e => this.handleCharactorDragstart(e, charactor)}>
+            {charactor.name}
+          </div>
+        </Badge>
       );
     };
 
@@ -93,7 +134,9 @@ class Position extends Component {
           <CellContainer cells={this.model.assortedCells[1]} />
         </TabPanel>
         <div className="pl-container">
-          {this.model.players.map(this.renderPlayer)}
+          {this.model.players.map((player, index) =>
+            <Player key={index} player={player} />
+          )}
         </div>
       </div >
     );
@@ -104,42 +147,6 @@ class Position extends Component {
       <div className="info-text">{`Box:${actorCount.box} Total:${actorCount.total}`}</div>
     </div>
   );
-
-  // プレイヤー描画
-  renderPlayer = player => {
-    const charactors = player.charactors.map(this.renderCharactor);
-
-    return (
-      <div key={player.Id} className="player-container">
-        <div className="player-name">
-          {player.name}
-        </div>
-        {charactors}
-      </div >
-    );
-  }
-
-  // キャラ描画
-  renderCharactor = charactor => {
-    const className = ['charactor-name', this.cellTypeToClass(charactor.cellType)].join(' ');
-    const color = (charactor.entryRound == 1) ? "primary" : "secondary";
-
-    return (
-      <Badge key={charactor.Id}
-        badgeContent={charactor.entryRound}
-        color={color}
-        overlap="circle"
-        anchorOrigin={{ vertical: 'top', horizontal: 'left', }}>
-        <div
-          className={className}
-          draggable
-          onDoubleClick={e => this.handleCharactorDoubleClick(charactor)}
-          onDragStart={e => this.handleCharactorDragstart(e, charactor)}>
-          {charactor.name}
-        </div>
-      </Badge>
-    );
-  }
 
   // セルタイプをcssクラスに変換
   cellTypeToClass = ct =>
@@ -187,10 +194,10 @@ class Position extends Component {
     e.stopPropagation();
 
     let changed = false;
-    if (this.dragItem instanceof Cell) {
+    if (this.dragItem instanceof CellModel) {
       changed = this.model.swapCell(this.dragItem, dstCell);
 
-    } else if (this.dragItem instanceof Charactor) {
+    } else if (this.dragItem instanceof CharactorModel) {
       changed = this.model.allocateCharactor(this.dragItem, dstCell);
     }
 

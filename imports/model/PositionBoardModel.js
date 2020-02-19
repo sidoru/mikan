@@ -1,6 +1,6 @@
 import PlayerRepository from '../repositories/PlayerRepository';
 import CellRepository from '../repositories/CellRepository';
-import { PositionBinder, Charactor, Cell, CellArray, CellType } from '../model/models';
+import { PositionBinder, CharactorModel, CellModel, CellArray, CellType } from '../model/models';
 
 // 配置作成する画面のモデルに該当
 export default class {

@@ -3,6 +3,18 @@ import { Mongo } from 'meteor/mongo';
 import { Schedules } from './collections.js';
 
 Meteor.methods({
+  'user.login'(userName, password) {
+    // basicちゃうけどな
+    let authUserName = process.env.BASIC_AUTH_USERNAME;
+    let authPassword = process.env.BASIC_AUTH_PASSWORD;
+    if (authUserName === null) {
+      authUserName = "user";
+      authPassword = "pass";
+    }
+
+    return userName === authUserName && password === authPassword;
+  },
+
   'schedules.insert'(executionDate, name) {
     const schedule = {
       executionDate,

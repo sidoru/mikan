@@ -43,16 +43,17 @@ export const LineageClassInfo = [
   { lineageClass: LineageClass.ELF_WATER, shortName: "水", sourceName: "エルフ(水)" },
 ];
 
-export class Player {
+export class PlayerModel {
   constructor(name) {
     this.name = name;
     this.charactors = [];
+    this.isEntry = true;
   }
 
   get Id() { return this.name; }
 }
 
-export class Charactor {
+export class CharactorModel {
   constructor(name, lineageClass, cellType, levelIndex, canBox) {
     this.name = name;
     this.lineageClass = lineageClass;
@@ -89,7 +90,7 @@ export class PlayerArray extends Array {
   };
 }
 
-export class Cell {
+export class CellModel {
   constructor() {
     this.cellType = CellType.NONE;
     this.charactor = null;
@@ -127,43 +128,4 @@ export class CellArray extends Array {
 
     return results;
   };
-}
-
-export class PositionBinder {
-  static apply(playerArray, assortedCells, schedule) {
-    if (schedule == null) {
-      return;
-    }
-
-    const assortedPositions = schedule.positions ? schedule.positions : [[], []];
-
-    // ラウンド毎に配置適用
-    const applyCells = (cellArray, positions, round) => {
-      cellArray.clear();
-
-      for (let [index, charactorId] of Object.entries(positions)) {
-        const charactor = playerArray.findCharactorById(charactorId);
-        if (charactor == null) {
-          continue;
-        }
-
-        charactor.entryRound = round;
-        cellArray[index].charactor = charactor;
-      }
-    }
-
-    playerArray.clearCharactorAttendance();
-
-    // 全セル全配置のデータをラウンド毎に分けて処理
-    for (let i in assortedCells) {
-      if (assortedPositions.length <= i) {
-        break;
-      }
-
-      const partCells = assortedCells[i];
-      const partPositions = assortedPositions[i];
-      const round = Number(i) + 1;
-      applyCells(partCells, partPositions, round);
-    }
-  }
 }

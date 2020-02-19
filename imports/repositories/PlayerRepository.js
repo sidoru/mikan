@@ -1,5 +1,5 @@
 
-import { Player, Charactor, PlayerArray, CellType, LineageClassInfo } from '../model/models';
+import { PlayerModel, CharactorModel, PlayerArray, CellType, LineageClassInfo } from '../model/models';
 
 export default class {
   playerTsv = `
@@ -91,11 +91,11 @@ export default class {
     for (let tp of tsvPlayers) {
       let player = players.find(x => x.name == tp.playerName);
       if (player == undefined) {
-        player = new Player(tp.playerName);
+        player = new PlayerModel(tp.playerName);
         players.push(player);
       }
 
-      player.charactors.push(new Charactor(tp.charactorName, tp.lineageClass, tp.cellType, tp.levelIndex, tp.canBox));
+      player.charactors.push(new CharactorModel(tp.charactorName, tp.lineageClass, tp.cellType, tp.levelIndex, tp.canBox));
 
       // キャラ名重複奴に連番振る
       for (let c of player.charactors) {
