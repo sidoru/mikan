@@ -23,7 +23,6 @@ class Position extends Component {
     };
 
     this.dragItem = null;
-
     this.model = new PositionBoardModel();
   }
 

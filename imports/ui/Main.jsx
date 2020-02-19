@@ -22,7 +22,6 @@ class Main extends Component {
       isAuthenticated: Meteor.userId() !== null,
     };
 
-    console.log(this.state.isAuthenticated);
     this.redirectLogin();
   }
 
@@ -31,7 +30,6 @@ class Main extends Component {
   }
 
   render() {
-
     const Menu = props =>
       <div className="menu-container">
         <List component="nav">
@@ -50,15 +48,16 @@ class Main extends Component {
       <div className="content">
         <Switch>
           <Route exact path="/login" component={Login} />
-          <Route exact component={ScheduleList} />
           <Route exact path="/" component={ScheduleList} />
           <Route exact path="/schedules/:scheduleId/position" component={Position} />
           <Route exact path="/hello" component={Hello} />
+
+          <Route exact component={ScheduleList} />
         </Switch>
       </div>
       ;
 
-    if (this.state.isAuthenticated) {
+    if (Meteor.userId() !== null) {
       return (
         <div className="container">
           <Menu />
@@ -92,7 +91,7 @@ class Main extends Component {
 
   redirectLogin() {
     const pathname = this.props.history.location.pathname;
-    if (!this.state.isAuthenticated && pathname != "/login") {
+    if (Meteor.userId() === null && pathname != "/login") {
       this.props.history.push({ pathname: "/login", state: { referrer: pathname } });
     }
   }

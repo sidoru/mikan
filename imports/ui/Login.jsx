@@ -46,35 +46,10 @@ class Login extends Component {
     this.state = {
       error: null
     };
-    
+
     if (Meteor.userId() !== null) {
-      console.log("ログイン済みなので飛ばす");
-      //this.props.history.push("/");
+      this.props.history.push("/");
     }
-    console.log(this.props.history);
-  }
-
-  handleSubmit(e) {
-    e.preventDefault();
-
-    let username = document.getElementById('username').value;
-    let password = document.getElementById('password').value;
-
-    Meteor.loginWithPassword(username, password, err => {
-      if (err) {
-        this.setState({ ...this.state, error: err.reason });
-      } else {
-        let referer = "/";
-        const locationState = this.props.history.location.state;
-        console.log("IM LOCATION", locationState);
-        if(locationState){
-          referer = locationState.referrer ? locationState.referrer : "/";
-        }
-        
-        console.log("ログインしたので帰る", referer);
-        this.props.history.push(referer);
-      }
-    });
   }
 
   render() {
@@ -124,10 +99,6 @@ class Login extends Component {
               id="password"
               autoComplete="current-password"
             />
-            <FormControlLabel
-              control={<Checkbox value="remember" color="primary" />}
-              label="Remember me"
-            />
             <Button
               type="submit"
               fullWidth
@@ -147,6 +118,31 @@ class Login extends Component {
         </Box>
       </Container>
     );
+  }
+
+  handleSubmit(e) {
+    e.preventDefault();
+
+    let username = document.getElementById('username').value;
+    let password = document.getElementById('password').value;
+    console.log(username);
+    if (username == "" || password == "") {
+      return;
+    }
+
+    Meteor.loginWithPassword(username, password, err => {
+      if (err) {
+        this.setState({ ...this.state, error: err.reason });
+      } else {
+        let referer = "/";
+        const locationState = this.props.history.location.state;
+        if (locationState) {
+          referer = locationState.referrer ? locationState.referrer : "/";
+        }
+
+        this.props.history.push(referer);
+      }
+    });
   }
 }
 export default withStyles(styles)(Login);
