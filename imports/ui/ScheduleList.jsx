@@ -17,14 +17,13 @@ import CardContent from '@material-ui/core/CardContent';
 import CardActions from '@material-ui/core/CardActions';
 import IconButton from '@material-ui/core/IconButton';
 import { red } from '@material-ui/core/colors';
-import FavoriteIcon from '@material-ui/icons/Favorite';
-import ShareIcon from '@material-ui/icons/Share';
 import MoreVertIcon from '@material-ui/icons/MoreVert';
 import { withStyles } from '@material-ui/core/styles';
 import GridOnIcon from '@material-ui/icons/GridOn';
 import TextField from '@material-ui/core/TextField';
-import TextareaAutosize from '@material-ui/core/TextareaAutosize';
 import Grid from '@material-ui/core/Grid';
+import Menu from '@material-ui/core/Menu';
+import MenuItem from '@material-ui/core/MenuItem';
 
 import { Schedules } from '../api/collections';
 import ResponsiveDialog from './ResponsiveDialog.jsx';
@@ -35,6 +34,8 @@ const styles = theme => ({
   },
   positionIcon: {
     transform: 'rotate(45deg)',
+  },
+  positionIconButton: {
     marginLeft: 'auto',
   },
   expandOpen: {
@@ -44,6 +45,12 @@ const styles = theme => ({
     backgroundColor: red[500],
   },
 });
+
+const  MenuButton = ({onClick}) =>
+  <IconButton aria-label="settings" onClick={onClick}>
+    <MoreVertIcon />
+  </IconButton>
+  ;
 
 class ScheduleList extends Component {
   constructor(props) {
@@ -59,30 +66,51 @@ class ScheduleList extends Component {
     const { classes } = this.props;
     const schedules = this.props.schedules ? this.props.schedules : [];
 
-    const Schedule = ({ executionDate, description, positionUrl }) => {
+    const Schedule = ({ scheduleId, executionDate, description, positionUrl }) => {
+      const [anchorEl, setAnchorEl] = React.useState(null);
+
+      const handleMenuOpenClick = (event) => {
+        setAnchorEl(event.currentTarget);
+      }
+      const handleMenuClose = () => {
+        setAnchorEl(null);
+      }
+
+      const handleDeleteClick = (id) => {
+        console.log(id);
+        Meteor.call('schedules.delete', id);
+      }
+
       return (
-        <Card className={classes.root} variant="outlined" style={{margin: '5px'}}>
+        <Card className={classes.root} variant="outlined" style={{ margin: '5px' }}>
           <CardHeader
             avatar={<Avatar aria-label="recipe" className={classes.avatar}>V</Avatar>}
             action={
-              <IconButton aria-label="settings">
-                <MoreVertIcon />
-              </IconButton>
+              <MenuButton onClick={handleMenuOpenClick} />
             }
             title={<Moment format="MM月DD日">{executionDate}</Moment>}
           />
           <CardContent>
-            <Typography variant="body2" color="textPrimary" component="p" style={{whiteSpace: 'pre-line'}}>
+            <Typography variant="body2" color="textPrimary" component="p" style={{ whiteSpace: 'pre-line' }}>
               {description || "ノーコメント"}
             </Typography>
           </CardContent>
           <CardActions>
-            <IconButton className={classes.positionIcon}>
+            <IconButton className={classes.positionIconButton}>
               <Link to={positionUrl}>
-                <GridOnIcon />
+                <GridOnIcon className={classes.positionIcon} />
               </Link>
             </IconButton>
           </CardActions>
+
+          <Menu
+            anchorEl={anchorEl}
+            keepMounted
+            open={Boolean(anchorEl)}
+            onClose={handleMenuClose}
+          >
+            <MenuItem onClick={e => handleDeleteClick(scheduleId)}>削除</MenuItem>
+          </Menu>
         </Card>
       )
     };
@@ -129,6 +157,7 @@ class ScheduleList extends Component {
 
         {schedules.map((schedule, index) =>
           <Schedule key={index}
+            scheduleId={schedule._id}
             executionDate={schedule.executionDate}
             description={schedule.description}
             positionUrl={`/schedules/${schedule._id}/position`} />
@@ -145,7 +174,7 @@ class ScheduleList extends Component {
   }
 
   handleRegistDone(e) {
-    const exeDate = new Date(this.state.executionDate +"T00:00" );
+    const exeDate = new Date(this.state.executionDate + "T00:00");
     console.log(this.state.executionDate);
     console.log(exeDate);
     console.log(exeDate.toUTCString());
@@ -171,3 +200,4 @@ export default withTracker(() => {
 
   return { schedules };
 })(withStyles(styles)(ScheduleList));
+

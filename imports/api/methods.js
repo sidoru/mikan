@@ -34,4 +34,8 @@ Meteor.methods({
 
     Schedules.update(scheduleId, { $set: schedule });
   },
+
+  'schedules.delete'(id) {
+    Schedules.remove(id);
+  },
 })
