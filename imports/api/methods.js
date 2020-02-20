@@ -1,24 +1,14 @@
 import { Meteor } from 'meteor/meteor';
 import { Mongo } from 'meteor/mongo';
 import { Schedules } from './collections.js';
+import moment from 'moment';
 
 Meteor.methods({
-  'user.login'(userName, password) {
-    // basicちゃうけどな
-    let authUserName = process.env.BASIC_AUTH_USERNAME;
-    let authPassword = process.env.BASIC_AUTH_PASSWORD;
-    if (authUserName === null) {
-      authUserName = "user";
-      authPassword = "pass";
-    }
-
-    return userName === authUserName && password === authPassword;
-  },
-
-  'schedules.insert'(executionDate, name) {
+  'schedules.insert'(executionDate, description) {
     const schedule = {
-      executionDate,
-      name,
+      executionDate: new Date(executionDate),
+      description,
+      createAt: new Date(),
       updateAt: new Date(),
       positions: null,
     };
@@ -26,10 +16,10 @@ Meteor.methods({
     Schedules.insert(schedule);
   },
 
-  'schedules.update'(id, executionDate, name) {
+  'schedules.update'(id, executionDate, description) {
     const row = {
-      executionDate,
-      name,
+      executionDate: new Date(executionDate),
+      description,
       updateAt: new Date(),
     };
 

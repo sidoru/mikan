@@ -74,7 +74,7 @@ class Main extends Component {
   }
 
   handleMenuItemClick = index => {
-    this.setState({ selectedIndex: index })
+    this.setState({ ...this.state, selectedIndex: index })
   };
 
   logout(e) {
@@ -92,7 +92,7 @@ class Main extends Component {
   redirectLogin() {
     const pathname = this.props.history.location.pathname;
     if (Meteor.userId() === null && pathname != "/login") {
-      this.props.history.push({ pathname: "/login", state: { referrer: pathname } });
+      this.props.history.push("/login", { referrer: pathname } );
     }
   }
 }
