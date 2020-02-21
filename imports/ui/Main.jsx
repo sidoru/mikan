@@ -9,6 +9,7 @@ import InboxIcon from '@material-ui/icons/Inbox';
 import DraftsIcon from '@material-ui/icons/Drafts';
 
 import Position from './Position.jsx';
+import ScheduleAbsence from './ScheduleAbsence.jsx';
 import ScheduleList from './ScheduleList.jsx';
 import Hello from './Hello.jsx';
 import ListItemLink from './ListItemLink.jsx';
@@ -50,6 +51,7 @@ class Main extends Component {
           <Route exact path="/login" component={Login} />
           <Route exact path="/" component={ScheduleList} />
           <Route exact path="/schedules/:scheduleId/position" component={Position} />
+          <Route exact path="/schedules/:scheduleId/absence" component={ScheduleAbsence} />
           <Route exact path="/hello" component={Hello} />
 
           <Route exact component={ScheduleList} />
