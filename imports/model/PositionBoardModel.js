@@ -11,6 +11,7 @@ export default class {
 
     // ラウンド毎のセル
     this.assortedCells = [cellRepository.getCells(), cellRepository.getCells()];
+    this.assortedBoxCells = [cellRepository.getBoxCells(), cellRepository.getBoxCells()];
 
     // 全セル
     this.cells = new CellArray();
@@ -21,15 +22,16 @@ export default class {
     const playerPepos = new PlayerRepository();
     this.players = playerPepos.getPlayers();
 
+    this.round = 0;
     this.schedule = null;
   }
 
   get executionDate() { return this.schedule ? this.schedule.executionDate : null; }
   get scheduleName() { return this.schedule ? this.schedule.name : null; }
-  get actorCounts() { 
-    return this.assortedCells.map(cells=>{
-      box: cells.occupies.filter(c => c.charactor.canBox).length 
-      total: cells.occupies.length 
+  get actorCounts() {
+    return this.assortedCells.map(cells => {
+      box: cells.occupies.filter(c => c.charactor.canBox).length
+      total: cells.occupies.length
     });
   }
 
@@ -105,9 +107,20 @@ export default class {
   }
 
   // キャラをセルに割当て
-  allocateCharactor(charactor, cell) {
-    this.exitCharactor(charactor);
-    cell.charactor = charactor;
+  allocateCharactor(charactor, cell, roundIndex) {
+    if (this.assortedBoxCells[roundIndex].some(x => x == cell)) {
+      const existedCell = this.assortedBoxCells[roundIndex].find(x => x.charactor == charactor)
+      if (existedCell != null) {
+        existedCell.swap(cell);
+      } else {
+        cell.charactor = charactor;
+      }
+    } else {
+      this.exitCharactor(charactor);
+      cell.charactor = charactor;
+      this.tryAddBoxCell(charactor, roundIndex);
+    }
+
     return true;
   }
 
@@ -121,5 +134,15 @@ export default class {
     srcCell.swap(dstCell);
 
     return true;
+  }
+
+  // BOX可でBOXに入ってなかったら突っ込む
+  tryAddBoxCell(charactor, roundIndex) {
+    if (charactor.canBox && !this.assortedBoxCells[roundIndex].some(x => x.charactor == charactor)) {
+      const vacantCell = this.assortedBoxCells[roundIndex].find(x => x.isVacant);
+      if (vacantCell != null) {
+        vacantCell.charactor = charactor;
+      }
+    }
   }
 }

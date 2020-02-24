@@ -36,4 +36,8 @@ export default class {
 
     return cells;
   }
+
+  getBoxCells() {
+    return [...Array(8).keys()].map(x => new CellModel());
+  }
 };

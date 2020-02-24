@@ -1,39 +1,84 @@
-import React, { Component } from 'react'
-import { useTracker } from 'meteor/react-meteor-data'
+import React, { useMemo } from 'react'
+import { withTracker } from 'meteor/react-meteor-data'
 
-import Avatar from '@material-ui/core/Avatar';
-import Button from '@material-ui/core/Button';
-import CssBaseline from '@material-ui/core/CssBaseline';
-import TextField from '@material-ui/core/TextField';
-import Link from '@material-ui/core/Link';
-import Box from '@material-ui/core/Box';
-import LockOutlinedIcon from '@material-ui/icons/LockOutlined';
-import Typography from '@material-ui/core/Typography';
-import { withStyles } from '@material-ui/core/styles';
-import Container from '@material-ui/core/Container';
-import Alert from '@material-ui/lab/Alert';
-import Collapse from '@material-ui/core/Collapse';
+import { makeStyles } from '@material-ui/core/styles';
+import FormLabel from '@material-ui/core/FormLabel';
+import FormControl from '@material-ui/core/FormControl';
+import FormGroup from '@material-ui/core/FormGroup';
+import FormControlLabel from '@material-ui/core/FormControlLabel';
+import FormHelperText from '@material-ui/core/FormHelperText';
+import Checkbox from '@material-ui/core/Checkbox';
+import Grid from '@material-ui/core/Grid';
 
 import { Schedules } from '../api/collections';
 import PositionBoardModel from '../model/PositionBoardModel';
+import PlayerRepository from '../repositories/PlayerRepository';
+import { TextField } from '@material-ui/core';
 
-export const useSchedule = (scheduleId) => useTracker(() => {
-  const isLoading = !Meteor.subscribe('schedule', { scheduleId }).ready();
-  const schedule = Schedules.findOne({ _id: scheduleId });
+const useStyles = makeStyles(theme => ({
+  root: {
+    display: 'flex',
+  },
+  formControl: {
+    margin: theme.spacing(3),
+  },
+}));
 
-  return { schedule, isLoading };
-}, [scheduleId]);
+function ScheduleAbsence(props) {
+  const { schedule } = props;
+  if (schedule == null) {
+    return (<div></div>);
+  }
 
-export default function (props) {
-  const { scheduleId } = props.match.params;
-  const { schedule, isLoading } = useSchedule(scheduleId);
+  const classes = useStyles();
 
-  console.log(scheduleId, isLoading, schedule);
+  const players = useMemo(() => {
+    const playerPepos = new PlayerRepository();
+    return playerPepos.getPlayers();
+  }, []);
+
+  //const model = useRef(new PositionBoardModel()).current;
+  //model.applySchedule(schedule);
+
+  const [checkedStates, setCheckedStates] = React.useState(players.map(p => p.isEntry));
+  const [comments, setComments] = React.useState(players.map(p => p.comment));
+  console.log(checkedStates);
+  const handleChange = index => event => {
+    setCheckedStates({ ...checkedStates, [index]: event.target.checked });
+  };
 
   return (
-    <Container component="main" maxWidth="xs">
-      <CssBaseline />
-      {schedule}
-    </Container>
+    <Grid>
+      {schedule.executionDate.toString()}
+
+      <Grid container justify="center" direction="column" >
+        {
+          players.map((player, index) =>
+          <Grid key={player.Id}>
+            <FormControlLabel
+              label={player.name}
+              control={
+                <Checkbox                  
+                
+                  checked={checkedStates[index]}
+                  onChange={handleChange(index)} />
+              }
+            />
+            <TextField  width="200px"/>
+            </Grid>
+          )
+        }
+        </Grid>
+    </Grid>
   );
 }
+export default withTracker(props => {
+  const { params } = props.match;
+
+  let schedule;
+  if (Meteor.subscribe('schedule', params.scheduleId).ready()) {
+    schedule = Schedules.findOne({ _id: params.scheduleId });
+  }
+
+  return { schedule };
+})(ScheduleAbsence);

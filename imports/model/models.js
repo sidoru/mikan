@@ -48,8 +48,10 @@ export class PlayerModel {
     this.name = name;
     this.charactors = [];
     this.isEntry = true;
+    this.comment = null;
   }
 
+  
   get Id() { return this.name; }
 }
 

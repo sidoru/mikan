@@ -86,6 +86,7 @@ export default class {
   }
 
   getPlayers() {
+    console.log("getPlayers");
     const players = new PlayerArray();
     const tsvPlayers = this.parsePlayerTsv(this.playerTsv);
     for (let tp of tsvPlayers) {
