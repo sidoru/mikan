@@ -5,7 +5,6 @@ import Paper from '@material-ui/core/Paper';
 import Tabs from '@material-ui/core/Tabs';
 import Tab from '@material-ui/core/Tab';
 import Badge from '@material-ui/core/Badge';
-import Moment from 'react-moment';
 import { makeStyles, withStyles } from '@material-ui/core/styles';
 
 import { CharactorModel, CellModel, CellType } from '../model/models';
@@ -13,6 +12,18 @@ import { Schedules } from '../api/collections';
 import PositionBoardModel from '../model/PositionBoardModel';
 import Helper from './Helper';
 import TabPanel from './TabPanel.jsx';
+import ResponsiveDialog from './ResponsiveDialog.jsx';
+
+export default withTracker(props => {
+  const { params } = props.match;
+
+  let schedule;
+  if (Meteor.subscribe('schedule', params.scheduleId).ready()) {
+    schedule = Schedules.findOne({ _id: params.scheduleId });
+  }
+
+  return { schedule };
+})(Position);
 
 function Position({ schedule }) {
   if (schedule == null) {
@@ -217,13 +228,35 @@ cellTypeToClass = ct =>
             ct == CellType.DANCER ? "dancer" : "";
 
 
-export default withTracker(props => {
-  const { params } = props.match;
-
-  let schedule;
-  if (Meteor.subscribe('schedule', params.scheduleId).ready()) {
-    schedule = Schedules.findOne({ _id: params.scheduleId });
+// 予定リストのダイアログ
+function ScheduleListDialog({ open, onClose , OnSelected}) {
+  // 開いてないときはどうでもいい
+  if (!open) {
+    return <div></div>;
   }
 
-  return { schedule };
-})(Position);
+  const schedules = Schedules.find({}, { sort: [["executionDate", "desc"], ["createAt", "desc"]] }).fetch();
+
+  const [executionDate, setExecutionDate] = React.useState(initialSchedule.executionDate);
+
+  handleDone = e => {
+    OnSelected();
+    onClose();
+  }
+
+  return (
+
+    <ResponsiveDialog
+      onDone={e => handleDone(e)}
+      onClose={onClose}
+      title="コピー元選択"
+      doneCaption="コピー"
+      cancelCaption="キャンセル"
+      open={open}
+      content={
+        <Grid>
+        </Grid>
+      }
+    />
+  )
+}
