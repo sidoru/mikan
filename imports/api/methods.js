@@ -1,7 +1,5 @@
 import { Meteor } from 'meteor/meteor';
-import { Mongo } from 'meteor/mongo';
 import { Schedules } from './collections.js';
-import moment from 'moment';
 
 Meteor.methods({
   'schedules.insert'(executionDate, description) {

@@ -38,6 +38,11 @@ export default class {
   }
 
   getBoxCells() {
-    return [...Array(8).keys()].map(x => new CellModel());
+    const cells = new CellArray();
+    for (let cell of [...Array(8).keys()].map(x => new CellModel())) {
+      cells.push(cell);
+    }
+    
+    return cells;
   }
 };

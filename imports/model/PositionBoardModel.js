@@ -4,9 +4,7 @@ import { PositionBinder, CharactorModel, CellModel, CellArray, CellType } from '
 
 // 配置作成する画面のモデルに該当
 export default class {
-  constructor(onChanged) {
-    this.onChanged = onChanged ? onChanged : () => { };
-
+  constructor() {
     const cellRepository = new CellRepository();
 
     // ラウンド毎のセル
@@ -14,9 +12,9 @@ export default class {
     this.assortedBoxCells = [cellRepository.getBoxCells(), cellRepository.getBoxCells()];
 
     // 全セル
-    this.cells = new CellArray();
-    for (let cell of this.assortedCells.reduce((x, y) => x.concat(y), [])) {
-      this.cells.push(cell);
+    this.allCells = new CellArray();
+    for (let cell of this.assortedCells.reduce((x, y) => [...x, ...y], [])) {
+      this.allCells.push(cell);
     }
 
     const playerPepos = new PlayerRepository();
@@ -26,13 +24,19 @@ export default class {
     this.schedule = null;
   }
 
-  get executionDate() { return this.schedule ? this.schedule.executionDate : null; }
-  get scheduleName() { return this.schedule ? this.schedule.name : null; }
-  get actorCounts() {
-    return this.assortedCells.map(cells => {
-      box: cells.occupies.filter(c => c.charactor.canBox).length
+  get roundCells() { return this.assortedCells[this.round]; }
+  get roundBoxCells() { return this.assortedBoxCells[this.round]; }
+
+  // セルかキャラからラウンドセル取得
+  getRoundCells = obj => this.assortedCells.find(x => x.some(x => x === obj || x.charactor === obj));
+  getRoundBoxCells = obj => this.assortedBoxCells.find(x => x.some(x => x === obj || x.charactor === obj));
+  isBoxCell = cell => !this.allCells.some(x => x === cell);
+
+  getEntryCounts() {
+    return this.assortedCells.map((cells,index) => ({
+      box: this.assortedBoxCells[index].occupies.length,
       total: cells.occupies.length
-    });
+    }));
   }
 
   // スケジュールデータ適用
@@ -76,19 +80,19 @@ export default class {
   }
 
   // キャラ入場  場所は適当に決まる
-  entryCharactor(charactor, roundIndex) {
-    const currentCells = this.assortedCells[roundIndex];
-    if (this.cells.occupies.some(x => x.charactor.Id == charactor.Id)) {
+  entryCharactor(charactor) {
+    if (this.allCells.occupies.some(x => x.charactor.Id == charactor.Id)) {
       return false;
     }
 
-    let cell = currentCells.vacants.find(x => x.cellType == charactor.cellType);
+    let cell = this.roundCells.vacants.find(x => x.cellType == charactor.cellType);
     if (cell == null) {
-      cell = currentCells.vacants.find(x => x);
+      cell = this.roundCells.vacants.find(x => x);
     }
 
     if (cell != null) {
       cell.charactor = charactor;
+      this.entryBoxCharactor(charactor);
       return true;
     }
 
@@ -96,53 +100,96 @@ export default class {
   }
 
   // キャラ退場
-  exitCharactor(charactor) {
-    const existedCell = this.cells.find(x => x.charactor === charactor);
+  exitCharactor(cell) {
+    if (cell.charactor === null) {
+      return false;
+    }
+
+    if (!this.isBoxCell(cell)) {
+      this.removeBoxCharactor(cell.charactor);
+    }
+
+    cell.clear();
+
+    return true;
+  }
+
+  // キャラをセルに割当て
+  allocateCharactor(charactor, cell) {
+    if (this.roundBoxCells.some(x => x == cell)) {
+      this.allocateBoxCharactor(charactor, cell);
+    } else {
+      this.removeCharactor(charactor);
+      cell.charactor = charactor;
+      this.entryBoxCharactor(charactor);
+    }
+
+    return true;
+  }
+
+  // セル移動
+  swapCell(srcCell, dstCell) {
+    // 両方のセルが空っぽまたは変わってない場合は何もしなくて良い
+    if (srcCell === dstCell || srcCell.charactor === dstCell.charactor) {
+      return false;
+    }
+
+    const isSrcBox = this.isBoxCell(srcCell);
+    const isDstBox = this.isBoxCell(dstCell);
+    
+    if (isSrcBox === isDstBox) {
+      srcCell.swap(dstCell);
+    } else if (srcCell.charactor) {
+      if (isSrcBox) {
+        // BOX -> 配置
+        this.allocateCharactor(srcCell.charactor, dstCell);
+      } else {
+        // 配置 -> BOX
+        this.allocateBoxCharactor(srcCell.charactor, dstCell)
+      }
+    }
+
+    return true;
+  }
+
+  // キャラ削除
+  removeCharactor(charactor) {
+    const existedCell = this.allCells.find(x => x.charactor === charactor);
     if (existedCell == null) {
       return false;
     }
 
     existedCell.clear();
+
     return true;
   }
 
-  // キャラをセルに割当て
-  allocateCharactor(charactor, cell, roundIndex) {
-    if (this.assortedBoxCells[roundIndex].some(x => x == cell)) {
-      const existedCell = this.assortedBoxCells[roundIndex].find(x => x.charactor == charactor)
-      if (existedCell != null) {
-        existedCell.swap(cell);
-      } else {
-        cell.charactor = charactor;
-      }
+  // キャラをBOXセルに割当て
+  allocateBoxCharactor(charactor, cell) {
+    const existedCell = this.roundBoxCells.find(x => x.charactor == charactor)
+    if (existedCell != null) {
+      existedCell.swap(cell);
     } else {
-      this.exitCharactor(charactor);
       cell.charactor = charactor;
-      this.tryAddBoxCell(charactor, roundIndex);
     }
-
-    return true;
-  }
-
-  // セル入れ替え
-  swapCell(srcCell, dstCell) {
-    // 両方のセルが空っぽでも何もしなくて良い
-    if (srcCell == dstCell || srcCell.charactor == dstCell.charactor) {
-      return false;
-    }
-
-    srcCell.swap(dstCell);
-
-    return true;
   }
 
   // BOX可でBOXに入ってなかったら突っ込む
-  tryAddBoxCell(charactor, roundIndex) {
-    if (charactor.canBox && !this.assortedBoxCells[roundIndex].some(x => x.charactor == charactor)) {
-      const vacantCell = this.assortedBoxCells[roundIndex].find(x => x.isVacant);
-      if (vacantCell != null) {
-        vacantCell.charactor = charactor;
+  entryBoxCharactor(charactor) {
+    if (charactor.canBox && !this.roundBoxCells.some(x => x.charactor == charactor)) {
+      const cell = this.roundBoxCells.find(x => x.isVacant);
+      if (cell != null) {
+        cell.charactor = charactor;
       }
+    }
+  }
+
+  // BOXに入ってたら削除
+  removeBoxCharactor(charactor) {
+    const cells = this.getRoundBoxCells(charactor);
+    if (cells != null) {
+      const existedBoxCell = cells.find(x => x.charactor == charactor);
+      existedBoxCell.clear();
     }
   }
 }

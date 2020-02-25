@@ -6,11 +6,12 @@ import Tabs from '@material-ui/core/Tabs';
 import Tab from '@material-ui/core/Tab';
 import Badge from '@material-ui/core/Badge';
 import Moment from 'react-moment';
+import { makeStyles, withStyles } from '@material-ui/core/styles';
 
 import { CharactorModel, CellModel, CellType } from '../model/models';
 import { Schedules } from '../api/collections';
 import PositionBoardModel from '../model/PositionBoardModel';
-
+import Helper from './Helper';
 import TabPanel from './TabPanel.jsx';
 
 function Position({ schedule }) {
@@ -22,6 +23,7 @@ function Position({ schedule }) {
 
   const model = useMemo(() => new PositionBoardModel(), []);
   model.applySchedule(schedule);
+  model.round = tabIndex;
 
   // ドラッグ中にデータが変わったらドラッグ中断
   let dragItem = null;
@@ -65,7 +67,7 @@ function Position({ schedule }) {
       changed = model.swapCell(dragItem, dstCell);
 
     } else if (dragItem instanceof CharactorModel) {
-      changed = model.allocateCharactor(dragItem, dstCell, tabIndex);
+      changed = model.allocateCharactor(dragItem, dstCell);
     }
 
     dragItem = null;
@@ -76,8 +78,9 @@ function Position({ schedule }) {
 
   // セルダブルクリック
   handleCellDoubleClick = cell => {
-    cell.clear();
-    onCellChanged();
+    if (model.exitCharactor(cell)) {
+      onCellChanged();
+    }
   }
 
   // セル変更時
@@ -85,7 +88,6 @@ function Position({ schedule }) {
     const position = model.getPostionInfo();
     Meteor.call('schedules.updatePosition', schedule._id, position);
   }
-
 
   // セルコンテナ
   const CellContainer = props => {
@@ -159,11 +161,13 @@ function Position({ schedule }) {
     );
   };
 
+  const entryCounts = model.getEntryCounts();
+  const executionDate = Helper.formatDate(schedule.executionDate, "MM月dd日");
   return (
     <div>
       <Paper square>
-        <div style={{ display: "inline-block", margin: "2px 20px" }}>
-          <Moment format="MM月DD日">{model.executionDate}</Moment>
+        <div style={{ display: "inline-block", margin: "0px 20px" }}>
+          {executionDate}
         </div>
         <div style={{ display: "inline-block" }}>
           <Tabs
@@ -171,8 +175,8 @@ function Position({ schedule }) {
             onChange={handleTabChange}
             indicatorColor="primary"
             textColor="primary">
-            <Tab label="1回目" />
-            <Tab label="2回目" />
+            <Tab label={<div><div>1回目</div><div>{`TOTAL${entryCounts[0].total}:BOX${entryCounts[0].box}`}</div></div>} />
+            <Tab label={<div><div>2回目</div><div>{`TOTAL${entryCounts[1].total}:BOX${entryCounts[1].box}`}</div></div>} />
           </Tabs>
         </div>
       </Paper>
