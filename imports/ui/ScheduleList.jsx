@@ -38,8 +38,8 @@ function ScheduleList({ classes, schedules }) {
   }
 
   const [dialogOpen, setDialogOpen] = React.useState(false);
-  const [selectedSchedule, setSelectedSchedule] = React.useState("");
   const [dialogMode, setDialogMode] = React.useState("");
+  const [selectedSchedule, setSelectedSchedule] = React.useState("");
 
   const handleAddClick = () => {
     setDialogMode("insert");

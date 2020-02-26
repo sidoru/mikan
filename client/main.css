@@ -94,13 +94,12 @@ html,body {
 }
 
 .pl-container {
-	padding-top: 2px;
 	overflow: hidden;
 	width: 700px;
   margin: auto;
 }
 .pl-container .player-container {
-	margin-top: 5px;
+	margin-top: 7px;
 	display: table;
 }
 .player-container .player-name {

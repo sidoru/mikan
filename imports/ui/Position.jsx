@@ -4,8 +4,19 @@ import { withTracker } from 'meteor/react-meteor-data';
 import Paper from '@material-ui/core/Paper';
 import Tabs from '@material-ui/core/Tabs';
 import Tab from '@material-ui/core/Tab';
+import Button from '@material-ui/core/Button';
+import Grid from '@material-ui/core/Grid';
 import Badge from '@material-ui/core/Badge';
+import List from '@material-ui/core/List';
+import ListItem from '@material-ui/core/ListItem';
+import ListItemIcon from '@material-ui/core/ListItemIcon';
+import ListItemText from '@material-ui/core/ListItemText';
+import IconButton from '@material-ui/core/IconButton';
+import InboxIcon from '@material-ui/icons/Inbox';
+import CloseIcon from '@material-ui/icons/Close';
+import DraftsIcon from '@material-ui/icons/Drafts';
 import { makeStyles, withStyles } from '@material-ui/core/styles';
+import Snackbar from '@material-ui/core/Snackbar';
 
 import { CharactorModel, CellModel, CellType } from '../model/models';
 import { Schedules } from '../api/collections';
@@ -31,6 +42,9 @@ function Position({ schedule }) {
   }
 
   const [tabIndex, setTabIndex] = useState(0);
+  const [listDialogOpen, setListDialogOpen] = React.useState(false);
+  const [message, setMessage] = React.useState({});
+  const [selectedCharactorId, setSelectedCharactorId] = React.useState(null);
 
   const model = useMemo(() => new PositionBoardModel(), []);
   model.applySchedule(schedule);
@@ -39,30 +53,50 @@ function Position({ schedule }) {
   // ドラッグ中にデータが変わったらドラッグ中断
   let dragItem = null;
 
+  // メッセージ
+  const showMessage = (message, actionTitle, onAction) => {
+    const onClose = () => {
+      setMessage(null);
+    }
+
+    setMessage({ message, actionTitle, onAction, onClose });
+  }
+
   // タブ切替
-  handleTabChange = (event, newValue) => {
+  const handleTabChange = (event, newValue) => {
     setTabIndex(newValue);
   };
 
   // キャラクリック
-  handleCharactorDoubleClick = charactor => {
+  const handleCharactorDoubleClick = charactor => {
+    if (model.isExistCharactorOtherRound(charactor)) {
+      const round = charactor.entryRound + 1;
+      const exitAction = () => {
+        model.exitCharactor(charactor);
+        setMessage(null);
+        onCellChanged();
+      };
+
+      showMessage(`${round}回目に参加してます。`, `${round}回目から外す`, exitAction);
+      return;
+    }
     if (model.entryCharactor(charactor, tabIndex)) {
       onCellChanged();
     }
   }
 
   // キャラDragstart
-  handleCharactorDragstart = (e, charactor) => {
+  const handleCharactorDragstart = (e, charactor) => {
     dragItem = charactor;
   }
 
   // セルDragstart
-  handleCellDragstart = (e, cell) => {
+  const handleCellDragstart = (e, cell) => {
     dragItem = cell;
   }
 
   // セルDragover
-  handleCellDragover = e => {
+  const handleCellDragover = e => {
     e.stopPropagation();
     if (dragItem != null) {
       e.preventDefault();
@@ -70,7 +104,7 @@ function Position({ schedule }) {
   }
 
   // セルDrop
-  handleCellDrop = (e, dstCell) => {
+  const handleCellDrop = (e, dstCell) => {
     e.stopPropagation();
 
     let changed = false;
@@ -88,44 +122,54 @@ function Position({ schedule }) {
   }
 
   // セルダブルクリック
-  handleCellDoubleClick = cell => {
+  const handleCellDoubleClick = cell => {
     if (model.exitCharactor(cell)) {
       onCellChanged();
     }
   }
 
   // セル変更時
-  onCellChanged = () => {
-    const position = model.getPostionInfo();
-    Meteor.call('schedules.updatePosition', schedule._id, position);
+  const onCellChanged = () => {
+    const positions = model.getPostionInfo();
+    Meteor.call('schedules.updatePosition', schedule._id, positions);
+  }
+
+  // コピー一覧の選択時
+  const handleScheduleListSelected = selectedSchedule => {
+    setListDialogOpen(false);
+    model.applySchedule(selectedSchedule);
+    onCellChanged();
   }
 
   // セルコンテナ
-  const CellContainer = props => {
-    const { cells } = props;
-
+  const CellContainer = ({ cells, cellWaterMark }) => {
     return (
       <div className="cell-container clear">
         {cells.map((cell, index) =>
-          <Cell key={index} cell={cell} />
+          <Cell key={index} cell={cell} cellWaterMark={cellWaterMark} />
         )}
       </div>
     );
   };
 
   // セル
-  const Cell = props => {
-    const { cell } = props;
+  const Cell = ({ cell, cellWaterMark }) => {
     const className = ['box', cellTypeToClass(cell.cellType)].join(' ');
     return (
-      <div className={className}
-        draggable onDoubleClick={e => handleCellDoubleClick(cell)}
+      <div
+        className={className}
+        draggable
+        onDoubleClick={e => handleCellDoubleClick(cell)}
         onDragStart={e => handleCellDragstart(e, cell)}
         onDrop={e => handleCellDrop(e, cell)}
         onDragOver={handleCellDragover}
       >
         <div className="text">
-          {cell.text}
+          {
+            (cellWaterMark !== undefined && cell.isVacant)
+              ? <div className="text-water-mark">{cellWaterMark}</div>
+              : cell.text
+          }
         </div>
       </div>
     );
@@ -153,11 +197,11 @@ function Position({ schedule }) {
     const { charactor } = props;
 
     const className = ['charactor-name', cellTypeToClass(charactor.cellType)].join(' ');
-    const color = (charactor.entryRound == 1) ? "primary" : "secondary";
+    const color = (charactor.entryRound == 0) ? "primary" : "secondary";
 
     return (
       <Badge key={charactor.Id}
-        badgeContent={charactor.entryRound}
+        badgeContent={charactor.entryRound + 1}
         color={color}
         overlap="circle"
         anchorOrigin={{ vertical: 'top', horizontal: 'left', }}>
@@ -194,13 +238,13 @@ function Position({ schedule }) {
       <TabPanel value={tabIndex} index={0}>
         <div>
           <CellContainer cells={model.assortedCells[0]} />
-          <CellContainer cells={model.assortedBoxCells[0]} />
+          <CellContainer cells={model.assortedBoxCells[0]} cellWaterMark="BOX" />
         </div>
       </TabPanel>
       <TabPanel value={tabIndex} index={1}>
         <div>
           <CellContainer cells={model.assortedCells[1]} />
-          <CellContainer cells={model.assortedBoxCells[1]} />
+          <CellContainer cells={model.assortedBoxCells[1]} cellWaterMark="BOX" />
         </div>
       </TabPanel>
       <div className="pl-container">
@@ -208,15 +252,17 @@ function Position({ schedule }) {
           <Player key={index} player={player} />
         )}
       </div>
+
+      <Button variant="outlined" color="primary" onClick={e => setListDialogOpen(true)}>別の日の配置をコピー</Button>
+      <ScheduleListDialog
+        open={listDialogOpen}
+        onClose={e => setListDialogOpen(false)}
+        onSelected={s => handleScheduleListSelected(s)}
+        exclusionId={schedule._id} />
+      <MesageSnackbar {...message} />
     </div >
   );
 }
-
-renderActorCounts = actorCount => (
-  <div className="info-container">
-    <div className="info-text">{`Box:${actorCount.box} Total:${actorCount.total}`}</div>
-  </div>
-);
 
 // セルタイプをcssクラスに変換
 cellTypeToClass = ct =>
@@ -227,36 +273,90 @@ cellTypeToClass = ct =>
           ct == CellType.SUPPORTER ? "supporter" :
             ct == CellType.DANCER ? "dancer" : "";
 
+ 
+ScheduleListDialog =  withTracker(props => {
+  const { exclusionId } = props;
+
+  let schedules;
+  if (Meteor.subscribe('schedules').ready()) {
+    schedules = Schedules.find({ _id: { $not: exclusionId } }, { sort: [["executionDate", "desc"], ["createAt", "desc"]] }).fetch();
+  }
+
+  return { schedules };
+})(ScheduleListDialogImple);
 
 // 予定リストのダイアログ
-function ScheduleListDialog({ open, onClose , OnSelected}) {
+function ScheduleListDialogImple({ open, onClose, onSelected,schedules }) {
   // 開いてないときはどうでもいい
-  if (!open) {
+  if (!open || !schedules) {
     return <div></div>;
   }
 
-  const schedules = Schedules.find({}, { sort: [["executionDate", "desc"], ["createAt", "desc"]] }).fetch();
-
-  const [executionDate, setExecutionDate] = React.useState(initialSchedule.executionDate);
-
-  handleDone = e => {
-    OnSelected();
-    onClose();
+  handleItemClick = schedule => {
+    onSelected(schedule);
   }
 
   return (
 
     <ResponsiveDialog
-      onDone={e => handleDone(e)}
+      fullWidth={true}
       onClose={onClose}
       title="コピー元選択"
-      doneCaption="コピー"
-      cancelCaption="キャンセル"
       open={open}
       content={
         <Grid>
+          <List component="nav">
+            {schedules.map((schedule, index) =>
+              <ListItem key={index} button onClick={e => handleItemClick(schedule)}>
+                <ListItemIcon>
+                  <InboxIcon />
+                </ListItemIcon>
+                <ListItemText primary={Helper.formatDate(schedule.executionDate, "MM月dd日")}
+                  secondary={schedule.description} />
+              </ListItem>
+            )}
+          </List>
         </Grid>
       }
     />
   )
+}
+
+function MesageSnackbar({ message, actionTitle, onAction, onClose }) {
+  const handleClose = (event, reason) => {
+    if (reason === 'clickaway') {
+      return;
+    }
+
+    onClose();
+  };
+
+  const open = !!message;
+
+  return (
+    <Snackbar
+      anchorOrigin={{
+        vertical: 'bottom',
+        horizontal: 'right',
+      }}
+      open={open}
+      autoHideDuration={6000}
+      onClose={handleClose}
+      message={message}
+      action={
+        <React.Fragment>
+          {
+            (onAction) ?
+              <Button color="secondary" size="small" onClick={onAction}>
+                {actionTitle}
+              </Button>
+              : null
+          }
+          <IconButton size="small" aria-label="close" color="inherit" onClick={handleClose}>
+            <CloseIcon fontSize="small" />
+          </IconButton>
+        </React.Fragment>
+      }
+    />
+  );
 }

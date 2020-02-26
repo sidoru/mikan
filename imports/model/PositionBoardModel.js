@@ -33,7 +33,7 @@ export default class {
   isBoxCell = cell => !this.allCells.some(x => x === cell);
 
   getEntryCounts() {
-    return this.assortedCells.map((cells,index) => ({
+    return this.assortedCells.map((cells, index) => ({
       box: this.assortedBoxCells[index].occupies.length,
       total: cells.occupies.length
     }));
@@ -44,44 +44,80 @@ export default class {
     this.schedule = schedule;
 
     // ラウンド毎に配置適用
-    const applyCells = (cellArray, positions, round) => {
-      cellArray.clear();
+    const applyCells = (cells, positions, round) => {
+      cells.clear();
+      if (positions === undefined) {
+        return;
+      }
 
       for (let [index, charactorId] of Object.entries(positions)) {
         const charactor = this.players.findCharactorById(charactorId);
-        if (charactor == null) {
-          continue;
+        if (charactor != null) {
+          charactor.entryRound = round;
+          cells[Number(index)].charactor = charactor;
         }
-
-        charactor.entryRound = round;
-        cellArray[index].charactor = charactor;
-      }
+      };
     }
 
-    const assortedPositions = schedule.positions ? schedule.positions : [[], []];
+    const rounds = schedule.positions ? schedule.positions : [[], []];
     this.players.clearCharactorAttendance();
 
     // 全セル全配置のデータをラウンド毎に分けて処理
     for (let i in this.assortedCells) {
-      if (assortedPositions.length <= i) {
+      if (rounds.length <= i) {
         break;
       }
 
+      const round = Number(i);
+
       const partCells = this.assortedCells[i];
-      const partPositions = assortedPositions[i];
-      const round = Number(i) + 1;
+      const partPositions = rounds[i].positions;
       applyCells(partCells, partPositions, round);
+
+      const partBoxCells = this.assortedBoxCells[i];
+      const partBoxPositions = rounds[i].boxPositions;
+      applyCells(partBoxCells, partBoxPositions, round);
     }
   }
 
-  // State取得 return array[roundIndex, [cellIndex , charactorId]]
+  // State取得 return array[roundIndex, {positions:[cellIndex , charactorId], boxPositions:[cellIndex , charactorId]}]
   getPostionInfo() {
-    return this.assortedCells.map(c => c.getInfo());
+    const rounds = [];
+    this.assortedCells.forEach((partCells, roundIndex) => {
+
+      const positions = {};
+      partCells.forEach((cell, index) => {
+        if (!cell.isVacant) {
+          positions[String(index)] = cell.charactor.Id;
+        }
+      });
+
+      const partBoxCells = this.assortedBoxCells[roundIndex];
+      const boxPositions = {};
+      partBoxCells.forEach((cell, index) => {
+        if (!cell.isVacant) {
+          boxPositions[String(index)] = cell.charactor.Id;
+        }
+      });
+
+      rounds.push({ positions, boxPositions });
+    });
+
+    return rounds;
+  }
+
+  isExistCharactorOtherRound(charactor) {
+    return this.allCells.occupies.some(x => x.charactor == charactor)
+      && !this.roundCells.occupies.some(x => x.charactor == charactor);
+  }
+
+  isExistCharactor(charactor) {
+    return this.allCells.occupies.some(x => x.charactor == charactor);
   }
 
   // キャラ入場  場所は適当に決まる
   entryCharactor(charactor) {
-    if (this.allCells.occupies.some(x => x.charactor.Id == charactor.Id)) {
+    if (this.isExistCharactor(charactor)) {
       return false;
     }
 
@@ -100,8 +136,15 @@ export default class {
   }
 
   // キャラ退場
-  exitCharactor(cell) {
-    if (cell.charactor === null) {
+  exitCharactor(obj) {
+    let cell;
+    if (obj instanceof CellModel) {
+      cell = obj;
+    } else if (obj instanceof CharactorModel) {
+      cell = this.allCells.find(x => x.charactor == obj);
+    }
+
+    if (cell !== null && cell.charactor === null) {
       return false;
     }
 
@@ -136,7 +179,7 @@ export default class {
 
     const isSrcBox = this.isBoxCell(srcCell);
     const isDstBox = this.isBoxCell(dstCell);
-    
+
     if (isSrcBox === isDstBox) {
       srcCell.swap(dstCell);
     } else if (srcCell.charactor) {

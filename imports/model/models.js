@@ -86,7 +86,7 @@ export class PlayerArray extends Array {
   clearCharactorAttendance = () => {
     for (let p of this) {
       for (let c of p.charactors) {
-        c.entryRound = 0;
+        c.entryRound = -1;
       }
     }
   };
@@ -119,15 +119,4 @@ export class CellArray extends Array {
       cell.clear();
     }
   }
-
-  getInfo = () => {
-    const results = {};
-    this.forEach((cell, i) => {
-      if (cell.charactor != null) {
-        results[String(i)] = cell.charactor.Id;
-      }
-    });
-
-    return results;
-  };
 }
