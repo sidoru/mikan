@@ -1,5 +1,5 @@
 import React, { useMemo, useState } from 'react';
-import { withTracker } from 'meteor/react-meteor-data';
+import { useTracker } from 'meteor/react-meteor-data';
 
 import Paper from '@material-ui/core/Paper';
 import Tabs from '@material-ui/core/Tabs';
@@ -25,28 +25,28 @@ import Helper from './Helper';
 import TabPanel from './TabPanel.jsx';
 import ResponsiveDialog from './ResponsiveDialog.jsx';
 
-export default withTracker(props => {
-  const { params } = props.match;
-
-  let schedule;
-  if (Meteor.subscribe('schedule', params.scheduleId).ready()) {
-    schedule = Schedules.findOne({ _id: params.scheduleId });
-  }
-
-  return { schedule };
-})(Position);
-
-function Position({ schedule }) {
-  if (schedule == null) {
-    return (<div></div>);
-  }
-
+export default function ({ match }) {
   const [tabIndex, setTabIndex] = useState(0);
   const [listDialogOpen, setListDialogOpen] = React.useState(false);
   const [message, setMessage] = React.useState({});
-  const [selectedCharactorId, setSelectedCharactorId] = React.useState(null);
+  const [selectedCharactor, setSelectedCharactor] = React.useState(null);
+
+  const scheduleId = match.params.scheduleId;
+  const { schedule } = useTracker(() => {
+    let schedule;
+    if (Meteor.subscribe('schedule', scheduleId).ready()) {
+      schedule = Schedules.findOne({ _id: scheduleId });
+    }
+
+    return { schedule };
+  }, [scheduleId]);
 
   const model = useMemo(() => new PositionBoardModel(), []);
+
+  if (!schedule) {
+    return (<div></div>);
+  }
+
   model.applySchedule(schedule);
   model.round = tabIndex;
 
@@ -154,7 +154,13 @@ function Position({ schedule }) {
 
   // セル
   const Cell = ({ cell, cellWaterMark }) => {
-    const className = ['box', cellTypeToClass(cell.cellType)].join(' ');
+    let selectedClassName;
+    if((selectedCharactor!== null && selectedCharactor == cell.charactor)){
+      selectedClassName ="accent";
+      console.log("accent");
+    }
+
+    const className = ['box', cellTypeToClass(cell.cellType), selectedClassName].join(' ');
     return (
       <div
         className={className}
@@ -208,6 +214,8 @@ function Position({ schedule }) {
         <div
           className={className}
           draggable
+          onMouseEnter={e => setSelectedCharactor(charactor)}
+          onMouseLeave={e => setSelectedCharactor(null)}
           onDoubleClick={e => handleCharactorDoubleClick(charactor)}
           onDragStart={e => handleCharactorDragstart(e, charactor)}>
           {charactor.name}
@@ -273,23 +281,22 @@ cellTypeToClass = ct =>
           ct == CellType.SUPPORTER ? "supporter" :
             ct == CellType.DANCER ? "dancer" : "";
 
- 
-ScheduleListDialog =  withTracker(props => {
-  const { exclusionId } = props;
-
-  let schedules;
-  if (Meteor.subscribe('schedules').ready()) {
-    schedules = Schedules.find({ _id: { $not: exclusionId } }, { sort: [["executionDate", "desc"], ["createAt", "desc"]] }).fetch();
+// 予定リストのダイアログ
+function ScheduleListDialog({ open, onClose, onSelected, exclusionId }) {
+  // 開いてないときはどうでもいい
+  if (!open) {
+    return <div></div>;
   }
 
-  return { schedules };
-})(ScheduleListDialogImple);
+  const { isLoading, schedules } = useTracker(() => {
+    const isLoading = !Meteor.subscribe('schedules').ready();
+    const schedules = Schedules.find({ _id: { $not: exclusionId } }, { sort: [["executionDate", "desc"], ["createAt", "desc"]] }).fetch();
 
-// 予定リストのダイアログ
-function ScheduleListDialogImple({ open, onClose, onSelected,schedules }) {
-  // 開いてないときはどうでもいい
-  if (!open || !schedules) {
-    return <div></div>;
+    return { isLoading, schedules };
+  }, []);
+
+  if (isLoading) {
+    return <div>Loading...</div>;
   }
 
   handleItemClick = schedule => {

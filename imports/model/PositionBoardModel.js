@@ -59,7 +59,7 @@ export default class {
       };
     }
 
-    const rounds = schedule.positions ? schedule.positions : [[], []];
+    const rounds = schedule && schedule.positions ? schedule.positions : [[], []];
     this.players.clearCharactorAttendance();
 
     // 全セル全配置のデータをラウンド毎に分けて処理

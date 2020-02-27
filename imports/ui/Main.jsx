@@ -60,7 +60,7 @@ class Main extends Component {
     if (Meteor.userId() !== null) {
       return (
         <div className="container">
-          <Menu />
+          
           <Content />
         </div>
       );

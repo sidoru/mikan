@@ -1,5 +1,5 @@
 import React from 'react';
-import { withTracker } from 'meteor/react-meteor-data';
+import { withTracker,useTracker } from 'meteor/react-meteor-data';
 import { Link } from 'react-router-dom';
 
 import Avatar from '@material-ui/core/Avatar';
@@ -23,23 +23,23 @@ import { Schedules } from '../api/collections';
 import ResponsiveDialog from './ResponsiveDialog.jsx';
 import Helper from './Helper';
 
-export default withTracker(() => {
-  let schedules;
-  if (Meteor.subscribe('schedules').ready()) {
-    schedules = Schedules.find({}, { sort: [["executionDate", "desc"], ["createAt", "desc"]] }).fetch();
-  }
+export default function ({ }) {
+  const {schedules} = useTracker(()=>{
+    let schedules;
+    if(Meteor.subscribe('schedules').ready()){
+      schedules = Schedules.find({}, { sort: [["executionDate", "desc"], ["createAt", "desc"]] }).fetch();
+    }
 
-  return { schedules };
-})(ScheduleList);
-
-function ScheduleList({ classes, schedules }) {
-  if (!schedules) {
-    return <div></div>;
-  }
+    return { schedules };
+  },[]);
 
   const [dialogOpen, setDialogOpen] = React.useState(false);
   const [dialogMode, setDialogMode] = React.useState("");
   const [selectedSchedule, setSelectedSchedule] = React.useState("");
+
+  if (!schedules) {
+    return <div></div>;
+  }
 
   const handleAddClick = () => {
     setDialogMode("insert");
