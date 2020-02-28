@@ -157,7 +157,6 @@ export default function ({ match }) {
     let selectedClassName;
     if((selectedCharactor!== null && selectedCharactor == cell.charactor)){
       selectedClassName ="accent";
-      console.log("accent");
     }
 
     const className = ['box', cellTypeToClass(cell.cellType), selectedClassName].join(' ');

@@ -31,7 +31,6 @@ Meteor.methods({
     };
 
     Schedules.update(scheduleId, { $set: schedule });
-    console.log(schedule);
   },
 
   'schedules.delete'(id) {

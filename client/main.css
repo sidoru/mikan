@@ -51,6 +51,15 @@ html,body {
 }
 
 .accent {
+	animation: flash 1s linear infinite;
+}
+@keyframes flash {
+  0% {
+   	  background-color:#1D6A96;
+  }
+  100% {
+		background-color:#FFF;
+  }
 }
 
 .text-water-mark{
