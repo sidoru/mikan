@@ -1,11 +1,9 @@
 import React, { Component } from 'react';
-import Position from './Position.jsx';
-import PositionList from './PositionList.jsx';
-import Hello from './Hello.jsx';
-import { BrowserRouter as Router, Route, Switch, } from 'react-router-dom';
+import { BrowserRouter as Router } from 'react-router-dom';
+
+import Main from './Main.jsx';
 
 class App extends Component {
-
   constructor(props) {
     super(props);
   }
@@ -13,12 +11,8 @@ class App extends Component {
   render() {
     return (
       <Router>
-      <Switch>
-        <Route exact path="/" component={PositionList}/>
-        <Route exact path="/position/:id" component={Position}/>
-        <Route exact path="/hello" component={Hello}/>
-      </Switch>
-    </Router>
+        <Main />
+      </Router>
     );
   }
 }

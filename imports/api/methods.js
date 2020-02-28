@@ -1,34 +1,39 @@
 import { Meteor } from 'meteor/meteor';
-import { Mongo } from 'meteor/mongo';
-import { Positions } from './collections.js';
+import { Schedules } from './collections.js';
 
 Meteor.methods({
-  'positions.insert'(executionDate, name) {
-    position = {
-      executionDate,
-      name,
+  'schedules.insert'(executionDate, description) {
+    const schedule = {
+      executionDate: new Date(executionDate),
+      description,
+      createAt: new Date(),
+      updateAt: new Date(),
+      positions: null,
+    };
+
+    Schedules.insert(schedule);
+  },
+
+  'schedules.update'(id, executionDate, description) {
+    const row = {
+      executionDate: new Date(executionDate),
+      description,
       updateAt: new Date(),
     };
 
-    Positions.insert(position);
+    Schedules.update(id, { $set: row });
   },
 
-  'positions.update'(id, executionDate, name) {
-    position = {
-      executionDate,
-      name,
-      updateAt: new Date(),
-    };
-
-    Positions.update(id, { $set: position });
-  },
-
-  'positions.updatePositions'(id, positions) {
-    position = {
+  'schedules.updatePosition'(scheduleId, positions) {
+    const schedule = {
       positions,
       updateAt: new Date(),
     };
 
-    Positions.update(id, { $set: position });
+    Schedules.update(scheduleId, { $set: schedule });
+  },
+
+  'schedules.delete'(id) {
+    Schedules.remove(id);
   },
 })

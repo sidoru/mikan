@@ -43,25 +43,31 @@ export const LineageClassInfo = [
   { lineageClass: LineageClass.ELF_WATER, shortName: "水", sourceName: "エルフ(水)" },
 ];
 
-export class Player {
+export class PlayerModel {
   constructor(name) {
     this.name = name;
     this.charactors = [];
+    this.isEntry = true;
+    this.comment = null;
   }
 
+  
   get Id() { return this.name; }
 }
 
-export class Charactor {
-  constructor(name, lineageClass, cellType, levelIndex, canBox) {
-    this.name = name;
+export class CharactorModel {
+  constructor(charactorName, nickname, lineageClass, cellType, levelIndex, canBox) {
+    this.charactorName = charactorName;
+    this.name = nickname;
     this.lineageClass = lineageClass;
     this.cellType = cellType;
     this.levelIndex = levelIndex;
     this.canBox = canBox;
+
+    this.entryRound = 0;// 0は不参加
   }
 
-  get Id() { return this.name; }
+  get Id() { return this.charactorName; }
 }
 
 export class PlayerArray extends Array {
@@ -77,9 +83,17 @@ export class PlayerArray extends Array {
 
     return null;
   };
+
+  clearCharactorAttendance = () => {
+    for (let p of this) {
+      for (let c of p.charactors) {
+        c.entryRound = -1;
+      }
+    }
+  };
 }
 
-export class Cell {
+export class CellModel {
   constructor() {
     this.cellType = CellType.NONE;
     this.charactor = null;
@@ -106,26 +120,4 @@ export class CellArray extends Array {
       cell.clear();
     }
   }
-
-  getInfo = () => {
-    const results = {};
-    this.forEach((cell, i) => {
-      if (cell.charactor != null) {
-        results[String(i)] = cell.charactor.Id;
-      }
-    });
-
-    return results;
-  };
-
-  applyInfo = (info, players) => {
-    for (let [index, charactorId] of Object.entries(info)) {
-      const charactor = players.findCharactorById(charactorId);
-      if (charactor == null) {
-        continue;
-      }
-
-      this[index].charactor = charactor;
-    }
-  };
 }

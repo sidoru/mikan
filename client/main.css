@@ -1,9 +1,27 @@
+html,body {
+	margin: 0px;
+	height: 100vh;
+}
+
 .container {
+	width:100%;
+	display:table;
+	height: 100vh;
+}
+.content {
+	display:table-cell;
+	padding: 10px;
+}
+
+.menu-container {
+	display:table-cell;
+	background-color: #607d8b;
+	width: 200px;
 }
 
 .cell-container {
 	width: 590px;
-	margin: 20px auto;
+	margin: auto;
 }
 /* ひし形 */
 .box {
@@ -16,6 +34,7 @@
 	border: 1px solid #777;
 	text-decoration: none;
 	transform: rotate(45deg);
+  color:#333;
 }
 /* ひし形の中の文字 */
 .box .text {
@@ -29,7 +48,26 @@
   line-height: 12px;
   font-weight: bold;
   margin-top: -100px;
-  color:#333;
+}
+
+.accent {
+	animation: flash 0.5s linear alternate infinite;
+}
+@keyframes flash {
+  0% {
+		color:#333;
+		text-shadow:1px 1px 0 #FFF, -1px -1px 0 #FFF,
+		-1px 1px 0 #FFF, 1px -1px 0 #FFF,
+		0px 1px 0 #FFF,  0-1px 0 #FFF,
+		-1px 0 0 #FFF, 1px 0 0 #FFF;
+  }
+  100% {
+		color:#BBB;
+		text-shadow:1px 1px 0 #222, -1px -1px 0 #222,
+		-1px 1px 0 #222, 1px -1px 0 #222,
+		0px 1px 0 #222,  0-1px 0 #222,
+		-1px 0 0 #222, 1px 0 0 #222;
+  }
 }
 
 .text-water-mark{
@@ -81,8 +119,8 @@
   margin: auto;
 }
 .pl-container .player-container {
-	margin-right: 3px;
-  display: table;
+	margin-top: 7px;
+	display: table;
 }
 .player-container .player-name {
 	width: 80px;
@@ -96,25 +134,9 @@
 	width: 100px;
 	float: left;
 	margin: 1px;
-	border: 2px solid #FFF;
 	border-radius: 10px;
 	text-align: center;
 	cursor: hand;
-}
-@keyframes border-accent {
-  from {
-    border: 2px solid #555;
-  }
-  to {
-    border: 2px solid #777;
-  }
-}
-.player-container .charactor-selected {
-  animation-name: border-accent;
-  animation-duration: 2s;
-  animation-delay: 0s;
-  animation-iteration-count: infinite;
-  animation-direction:alternate-reverse;
 }
 
 .info-container {

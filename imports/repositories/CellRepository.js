@@ -1,5 +1,5 @@
 
-import { Cell, CellType, CellArray } from '../model/model';
+import { CellModel, CellType, CellArray } from '../model/models';
 
 export default class {
   getCells() {
@@ -12,7 +12,7 @@ export default class {
 
     const cells = new CellArray();
     for (let i = 0; i < 114; i++) {
-      const cell = new Cell();
+      const cell = new CellModel();
       cells.push(cell);
       if (blockCells.indexOf(i) > -1) {
         cell.cellType = CellType.BLOCK;
@@ -34,6 +34,15 @@ export default class {
       }
     }
 
+    return cells;
+  }
+
+  getBoxCells() {
+    const cells = new CellArray();
+    for (let cell of [...Array(8).keys()].map(x => new CellModel())) {
+      cells.push(cell);
+    }
+    
     return cells;
   }
 };
