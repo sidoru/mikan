@@ -34,6 +34,7 @@ html,body {
 	border: 1px solid #777;
 	text-decoration: none;
 	transform: rotate(45deg);
+  color:#333;
 }
 /* ひし形の中の文字 */
 .box .text {
@@ -47,18 +48,25 @@ html,body {
   line-height: 12px;
   font-weight: bold;
   margin-top: -100px;
-  color:#333;
 }
 
 .accent {
-	animation: flash 1s linear infinite;
+	animation: flash 0.5s linear alternate infinite;
 }
 @keyframes flash {
   0% {
-   	  background-color:#1D6A96;
+		color:#333;
+		text-shadow:1px 1px 0 #FFF, -1px -1px 0 #FFF,
+		-1px 1px 0 #FFF, 1px -1px 0 #FFF,
+		0px 1px 0 #FFF,  0-1px 0 #FFF,
+		-1px 0 0 #FFF, 1px 0 0 #FFF;
   }
   100% {
-		background-color:#FFF;
+		color:#BBB;
+		text-shadow:1px 1px 0 #222, -1px -1px 0 #222,
+		-1px 1px 0 #222, 1px -1px 0 #222,
+		0px 1px 0 #222,  0-1px 0 #222,
+		-1px 0 0 #222, 1px 0 0 #222;
   }
 }
 

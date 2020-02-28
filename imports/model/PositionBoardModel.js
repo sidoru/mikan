@@ -21,7 +21,6 @@ export default class {
     this.players = playerPepos.getPlayers();
 
     this.round = 0;
-    this.schedule = null;
   }
 
   get roundCells() { return this.assortedCells[this.round]; }
@@ -41,8 +40,6 @@ export default class {
 
   // スケジュールデータ適用
   applySchedule(schedule) {
-    this.schedule = schedule;
-
     // ラウンド毎に配置適用
     const applyCells = (cells, positions, round) => {
       cells.clear();

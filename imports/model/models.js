@@ -56,8 +56,9 @@ export class PlayerModel {
 }
 
 export class CharactorModel {
-  constructor(name, lineageClass, cellType, levelIndex, canBox) {
-    this.name = name;
+  constructor(charactorName, nickname, lineageClass, cellType, levelIndex, canBox) {
+    this.charactorName = charactorName;
+    this.name = nickname;
     this.lineageClass = lineageClass;
     this.cellType = cellType;
     this.levelIndex = levelIndex;
@@ -66,7 +67,7 @@ export class CharactorModel {
     this.entryRound = 0;// 0は不参加
   }
 
-  get Id() { return this.name; }
+  get Id() { return this.charactorName; }
 }
 
 export class PlayerArray extends Array {

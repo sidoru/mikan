@@ -1,37 +1,33 @@
 import React from 'react';
-import { withTracker,useTracker } from 'meteor/react-meteor-data';
+import { withTracker, useTracker } from 'meteor/react-meteor-data';
 import { Link } from 'react-router-dom';
 
-import Avatar from '@material-ui/core/Avatar';
 import Typography from '@material-ui/core/Typography';
 import Button from '@material-ui/core/Button';
-import Card from '@material-ui/core/Card';
-import CardHeader from '@material-ui/core/CardHeader';
-import CardContent from '@material-ui/core/CardContent';
-import CardActions from '@material-ui/core/CardActions';
+import Paper from '@material-ui/core/Paper';
 import IconButton from '@material-ui/core/IconButton';
 import { red } from '@material-ui/core/colors';
 import MoreVertIcon from '@material-ui/icons/MoreVert';
 import { makeStyles } from '@material-ui/core/styles';
-import GridOnIcon from '@material-ui/icons/GridOn';
 import TextField from '@material-ui/core/TextField';
 import Grid from '@material-ui/core/Grid';
 import Menu from '@material-ui/core/Menu';
 import MenuItem from '@material-ui/core/MenuItem';
+import ScheduleIcon from '@material-ui/icons/Schedule';
 
 import { Schedules } from '../api/collections';
 import ResponsiveDialog from './ResponsiveDialog.jsx';
 import Helper from './Helper';
 
 export default function ({ }) {
-  const {schedules} = useTracker(()=>{
+  const { schedules } = useTracker(() => {
     let schedules;
-    if(Meteor.subscribe('schedules').ready()){
+    if (Meteor.subscribe('schedules').ready()) {
       schedules = Schedules.find({}, { sort: [["executionDate", "desc"], ["createAt", "desc"]] }).fetch();
     }
 
     return { schedules };
-  },[]);
+  }, []);
 
   const [dialogOpen, setDialogOpen] = React.useState(false);
   const [dialogMode, setDialogMode] = React.useState("");
@@ -66,13 +62,19 @@ export default function ({ }) {
       <Button variant="outlined" color="primary" onClick={e => handleAddClick()}>追加</Button>
       <ScheduleEditDialog open={dialogOpen} mode={dialogMode} schedule={selectedSchedule} onClose={e => setDialogOpen(false)} />
 
-      {schedules.map((schedule, index) =>
-        <Schedule key={index}
-          schedule={schedule}
-          onUpdateClick={handleUpdateClick}
-          onDeleteClick={handleDeleteClick}
-          positionUrl={`/schedules/${schedule._id}/position`} />
-      )}
+      <div style={{ flexGrow: 1 }}>
+        <Grid container spacing={5}>
+          {schedules.map((schedule, index) =>
+            <Grid key={index} item xs={12}>
+              <Schedule
+                schedule={schedule}
+                onUpdateClick={handleUpdateClick}
+                onDeleteClick={handleDeleteClick}
+                positionUrl={`/schedules/${schedule._id}/position`} />
+            </Grid>
+          )}
+        </Grid>
+      </div>
     </div>
   );
 }
@@ -98,7 +100,6 @@ const useStyles = makeStyles(theme => ({
 // リストの行
 const Schedule = ({ onUpdateClick, onDeleteClick, schedule, positionUrl }) => {
   const [anchorEl, setAnchorEl] = React.useState(null);
-  const classes = useStyles();
 
   const handleMenuOpenClick = (event) => {
     setAnchorEl(event.currentTarget);
@@ -120,25 +121,26 @@ const Schedule = ({ onUpdateClick, onDeleteClick, schedule, positionUrl }) => {
   const executionDate = Helper.formatDate(schedule.executionDate, "MM月dd日");
 
   return (
-    <Card className={classes.root} variant="outlined" style={{ margin: '5px' }}>
-      <CardHeader
-        avatar={<Avatar aria-label="recipe" className={classes.avatar}>V</Avatar>}
-        action={<MenuButton onClick={handleMenuOpenClick} />}
-        title={<Typography> {executionDate}</Typography>}
-      />
-      <CardContent>
-        <Typography color="textPrimary" component="p" style={{ whiteSpace: 'pre-line' }}>
-          {schedule.description || "ノーコメント"}
-        </Typography>
-      </CardContent>
-      <CardActions>
-        <IconButton className={classes.positionIconButton}>
-          <Link to={positionUrl}>
-            <GridOnIcon className={classes.positionIcon} />
-          </Link>
-        </IconButton>
-      </CardActions>
+    <Paper>
+      <Grid container spacing={3}>
+        <Grid item xs={1}>
+          <ScheduleIcon color="action" />
+        </Grid>
+        <Grid item xs={2}>
+          <Link to={positionUrl}> {executionDate}</Link>
+        </Grid>
+        <Grid item xs={8}>
+          <Typography color="textPrimary" component="p" style={{ whiteSpace: 'pre-line' }}>
+            {schedule.description || "ノーコメント"}
+          </Typography>
+        </Grid>
 
+        <Grid item xs={1}>
+          <IconButton aria-label="settings" onClick={handleMenuOpenClick}>
+            <MoreVertIcon />
+          </IconButton>
+        </Grid>
+        
       <Menu
         anchorEl={anchorEl}
         keepMounted
@@ -147,7 +149,8 @@ const Schedule = ({ onUpdateClick, onDeleteClick, schedule, positionUrl }) => {
         <MenuItem onClick={e => handleUpdateClick()}>更新</MenuItem>
         <MenuItem onClick={e => handleDeleteClick()}>削除</MenuItem>
       </Menu>
-    </Card>
+      </Grid>
+    </Paper >
   )
 };
 

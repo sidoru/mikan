@@ -14,8 +14,6 @@ import ListItemText from '@material-ui/core/ListItemText';
 import IconButton from '@material-ui/core/IconButton';
 import InboxIcon from '@material-ui/icons/Inbox';
 import CloseIcon from '@material-ui/icons/Close';
-import DraftsIcon from '@material-ui/icons/Drafts';
-import { makeStyles, withStyles } from '@material-ui/core/styles';
 import Snackbar from '@material-ui/core/Snackbar';
 
 import { CharactorModel, CellModel, CellType } from '../model/models';
@@ -164,6 +162,8 @@ export default function ({ match }) {
       <div
         className={className}
         draggable
+        onMouseOver={e => setSelectedCharactor(cell.charactor)}
+        onMouseLeave={e => setSelectedCharactor(null)}
         onDoubleClick={e => handleCellDoubleClick(cell)}
         onDragStart={e => handleCellDragstart(e, cell)}
         onDrop={e => handleCellDrop(e, cell)}
@@ -198,10 +198,13 @@ export default function ({ match }) {
   };
 
   // キャラ
-  const Charactor = props => {
-    const { charactor } = props;
+  const Charactor = ({ charactor }) => {
+    let selectedClassName;
+    if((selectedCharactor!== null && selectedCharactor == charactor)){
+      selectedClassName ="accent";
+    }
 
-    const className = ['charactor-name', cellTypeToClass(charactor.cellType)].join(' ');
+    const className = ['charactor-name', cellTypeToClass(charactor.cellType), selectedClassName].join(' ');
     const color = (charactor.entryRound == 0) ? "primary" : "secondary";
 
     return (
@@ -213,7 +216,7 @@ export default function ({ match }) {
         <div
           className={className}
           draggable
-          onMouseEnter={e => setSelectedCharactor(charactor)}
+          onMouseOver={e => setSelectedCharactor(charactor)}
           onMouseLeave={e => setSelectedCharactor(null)}
           onDoubleClick={e => handleCharactorDoubleClick(charactor)}
           onDragStart={e => handleCharactorDragstart(e, charactor)}>
