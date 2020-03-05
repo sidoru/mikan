@@ -112,6 +112,10 @@ export default class {
     return this.allCells.occupies.some(x => x.charactor == charactor);
   }
 
+  isExistAccount(charactor) {
+    return this.allCells.occupies.some(x => x.charactor !== charactor && x.charactor.accountId !== "" && x.charactor.accountId == charactor.accountId);
+  }
+
   // キャラ入場  場所は適当に決まる
   entryCharactor(charactor) {
     if (this.isExistCharactor(charactor)) {
