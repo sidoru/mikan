@@ -50,7 +50,7 @@ Fatalis	要	ミルド		DRK	80+	不可能
     for (let row of rows) {
       const columns = row.split("\t").map(c => c.trim());
       if (columns.length != 10) {
-        console.log(`列数変やで ${columns}`);
+        console.log(`列数変やで 列数=${columns.length} 中身=${columns}`);
         continue;
       }
 
@@ -106,8 +106,10 @@ Fatalis	要	ミルド		DRK	80+	不可能
       }
 
       player.charactors.push(new CharactorModel(tp.charactorName, tp.charactorNickname, tp.accountId, tp.lineageClass, tp.cellType, tp.levelIndex, tp.canBox));
+    }
 
-      // キャラ名重複奴に連番振る
+    // キャラ名重複奴に連番振る
+    for (let player of players) {
       for (let c of player.charactors) {
         if (player.charactors.some(x => x != c && x.name == c.name)) {
           let seq = 1;
