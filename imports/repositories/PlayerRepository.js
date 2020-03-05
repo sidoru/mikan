@@ -106,8 +106,10 @@ export default class {
       }
 
       player.charactors.push(new CharactorModel(tp.charactorName, tp.charactorNickname, tp.accountId, tp.lineageClass, tp.cellType, tp.levelIndex, tp.canBox));
+    }
 
-      // キャラ名重複奴に連番振る
+    // キャラ名重複奴に連番振る
+    for (let player of players) {
       for (let c of player.charactors) {
         if (player.charactors.some(x => x != c && x.name == c.name)) {
           let seq = 1;
