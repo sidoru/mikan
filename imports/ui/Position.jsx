@@ -114,7 +114,11 @@ export default function ({ match }) {
       changed = model.swapCell(dragItem, dstCell);
 
     } else if (dragItem instanceof CharactorModel) {
-      changed = model.allocateCharactor(dragItem, dstCell);
+      if (model.isExistAccount(dragItem)) {
+        showMessage(`このキャラのアカウントは既に参加してます。`);
+      }else{
+        changed = model.allocateCharactor(dragItem, dstCell);
+      }
     }
 
     dragItem = null;
