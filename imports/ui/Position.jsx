@@ -40,7 +40,6 @@ export default function ({ match }) {
   }, [scheduleId]);
 
   const model = useMemo(() => new PositionBoardModel(), []);
-
   if (!schedule) {
     return (<div></div>);
   }
@@ -67,6 +66,7 @@ export default function ({ match }) {
 
   // キャラクリック
   const handleCharactorDoubleClick = charactor => {
+
     if (model.isExistCharactorOtherRound(charactor)) {
       const round = charactor.entryRound + 1;
       const exitAction = () => {
@@ -77,7 +77,11 @@ export default function ({ match }) {
 
       showMessage(`${round}回目に参加してます。`, `${round}回目から外す`, exitAction);
       return;
+    } else if (model.isExistAccount(charactor)) {
+      showMessage(`このキャラのアカウントは既に参加してます。`);
+      return;
     }
+
     if (model.entryCharactor(charactor, tabIndex)) {
       onCellChanged();
     }
@@ -153,8 +157,8 @@ export default function ({ match }) {
   // セル
   const Cell = ({ cell, cellWaterMark }) => {
     let selectedClassName;
-    if((selectedCharactor!== null && selectedCharactor == cell.charactor)){
-      selectedClassName ="accent";
+    if ((selectedCharactor !== null && selectedCharactor == cell.charactor)) {
+      selectedClassName = "accent";
     }
 
     const className = ['box', cellTypeToClass(cell.cellType), selectedClassName].join(' ');
@@ -200,8 +204,8 @@ export default function ({ match }) {
   // キャラ
   const Charactor = ({ charactor }) => {
     let selectedClassName;
-    if((selectedCharactor!== null && selectedCharactor == charactor)){
-      selectedClassName ="accent";
+    if ((selectedCharactor !== null && selectedCharactor == charactor)) {
+      selectedClassName = "accent";
     }
 
     const className = ['charactor-name', cellTypeToClass(charactor.cellType), selectedClassName].join(' ');
