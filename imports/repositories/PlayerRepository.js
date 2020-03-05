@@ -50,7 +50,7 @@ Fatalis	要	ミルド		DRK	80+	不可能
     for (let row of rows) {
       const columns = row.split("\t").map(c => c.trim());
       if (columns.length != 10) {
-        console.log(`列数変やで ${columns}`);
+        console.log(`列数変やで 列数=${columns.length} 中身=${columns}`);
         continue;
       }
 
