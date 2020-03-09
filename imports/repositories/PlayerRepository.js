@@ -1,5 +1,5 @@
 
-import { PlayerModel, CharactorModel, PlayerArray, CellType, LineageClassInfo } from '../model/models';
+import { PlayerModel, CharactorModel, PlayerArray, CellRole, LineageClassInfo } from '../model/models';
 
 export default class {
   playerTsv = `
@@ -65,12 +65,12 @@ export default class {
       const canBox = columns[6] == "可能";
       const role = columns[9];
 
-      const charactorCellType =
-        (role == "1セル") ? CellType.ONE_CELL
-          : (role == "2セル") ? CellType.TWO_CELL
-            : (role == "タゲ") ? CellType.TARGET
-              : (role == "音ゲー") ? CellType.DANCER
-                : CellType.SUPPORTER;
+      const charactorCellRole =
+        (role == "1セル") ? CellRole.ONE_CELL
+          : (role == "2セル") ? CellRole.TWO_CELL
+            : (role == "タゲ") ? CellRole.TARGET
+              : (role == "音ゲー") ? CellRole.DANCER
+                : CellRole.SUPPORTER;
 
       const classInfo = LineageClassInfo.find(x => x.sourceName == className);
       if (classInfo == null) {
@@ -87,7 +87,7 @@ export default class {
         accountId,
         charactorNickname,
         lineageClass: classInfo.lineageClass,
-        cellType: charactorCellType,
+        cellRole: charactorCellRole,
         levelIndex: levelIndex,
         canBox: canBox
       });
@@ -106,7 +106,7 @@ export default class {
         players.push(player);
       }
 
-      player.charactors.push(new CharactorModel(tp.charactorName, tp.charactorNickname, tp.accountId, tp.lineageClass, tp.cellType, tp.levelIndex, tp.canBox));
+      player.charactors.push(new CharactorModel(tp.charactorName, tp.charactorNickname, tp.accountId, tp.lineageClass, tp.cellRole, tp.levelIndex, tp.canBox));
     }
 
     // キャラ名重複奴に連番振る

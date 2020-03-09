@@ -1,6 +1,6 @@
 import PlayerRepository from '../repositories/PlayerRepository';
 import CellRepository from '../repositories/CellRepository';
-import { PositionBinder, CharactorModel, CellModel, CellArray, CellType } from '../model/models';
+import { CharactorModel, CellModel, CellArray, CellType } from '../model/models';
 
 // 配置作成する画面のモデルに該当
 export default class {
@@ -10,11 +10,18 @@ export default class {
     // ラウンド毎のセル
     this.assortedCells = [cellRepository.getCells(), cellRepository.getCells()];
     this.assortedBoxCells = [cellRepository.getBoxCells(), cellRepository.getBoxCells()];
+    this.assortedPartyCells = [cellRepository.getPartyCells(), cellRepository.getPartyCells()];
 
     // 全セル
     this.allCells = new CellArray();
     for (let cell of this.assortedCells.reduce((x, y) => [...x, ...y], [])) {
       this.allCells.push(cell);
+    }
+
+    // 全PTセル BOXだけ面倒で作ってない
+    this.allPartyCells = new CellArray();
+    for (let cell of this.assortedPartyCells.reduce((x, y) => [...x, ...y], [])) {
+      this.allPartyCells.push(cell);
     }
 
     const playerPepos = new PlayerRepository();
@@ -25,11 +32,7 @@ export default class {
 
   get roundCells() { return this.assortedCells[this.round]; }
   get roundBoxCells() { return this.assortedBoxCells[this.round]; }
-
-  // セルかキャラからラウンドセル取得
-  getRoundCells = obj => this.assortedCells.find(x => x.some(x => x === obj || x.charactor === obj));
-  getRoundBoxCells = obj => this.assortedBoxCells.find(x => x.some(x => x === obj || x.charactor === obj));
-  isBoxCell = cell => !this.allCells.some(x => x === cell);
+  get roundPartyCells() { return this.assortedPartyCells[this.round]; }
 
   getEntryCounts() {
     return this.assortedCells.map((cells, index) => ({
@@ -39,7 +42,7 @@ export default class {
   }
 
   // スケジュールデータ適用
-  applySchedule(schedule) {
+  apply(positions) {
     // ラウンド毎に配置適用
     const applyCells = (cells, positions, round) => {
       cells.clear();
@@ -56,51 +59,50 @@ export default class {
       };
     }
 
-    const rounds = schedule && schedule.positions ? schedule.positions : [[], []];
+    const rounds = positions ? positions : [[], []];
     this.players.clearCharactorAttendance();
 
     // 全セル全配置のデータをラウンド毎に分けて処理
-    for (let i in this.assortedCells) {
-      if (rounds.length <= i) {
+    for (let round of [0, 1]) {
+      if (rounds.length <= round) {
         break;
       }
 
-      const round = Number(i);
-
-      const partCells = this.assortedCells[i];
-      const partPositions = rounds[i].positions;
-      applyCells(partCells, partPositions, round);
-
-      const partBoxCells = this.assortedBoxCells[i];
-      const partBoxPositions = rounds[i].boxPositions;
-      applyCells(partBoxCells, partBoxPositions, round);
+      applyCells(this.assortedCells[round], rounds[round].positions, round);
+      applyCells(this.assortedBoxCells[round], rounds[round].boxPositions, round);
+      applyCells(this.assortedPartyCells[round], rounds[round].partyPositions, round);
     }
   }
 
   // State取得 return array[roundIndex, {positions:[cellIndex , charactorId], boxPositions:[cellIndex , charactorId]}]
-  getPostionInfo() {
-    const rounds = [];
-    this.assortedCells.forEach((partCells, roundIndex) => {
-
+  getPostions() {
+    const createIndexData = cells => {
+      const roundCells = cells;
       const positions = {};
-      partCells.forEach((cell, index) => {
+      roundCells.forEach((cell, index) => {
         if (!cell.isVacant) {
           positions[String(index)] = cell.charactor.Id;
         }
       });
 
-      const partBoxCells = this.assortedBoxCells[roundIndex];
-      const boxPositions = {};
-      partBoxCells.forEach((cell, index) => {
-        if (!cell.isVacant) {
-          boxPositions[String(index)] = cell.charactor.Id;
-        }
-      });
+      return positions;
+    }
 
-      rounds.push({ positions, boxPositions });
-    });
+    const rounds = [];
+    for (let round of [0, 1]) {
+      const positions = createIndexData(this.assortedCells[round]);
+      const boxPositions = createIndexData(this.assortedBoxCells[round]);
+      const partyPositions = createIndexData(this.assortedPartyCells[round]);
+      rounds.push({ positions, boxPositions, partyPositions });
+    }
 
     return rounds;
+  }
+
+  // 1回目と2回目入れ替え
+  swapRound() {
+    const positions = this.getPostions();
+    this.apply([positions[1], positions[0]]);
   }
 
   isExistCharactorOtherRound(charactor) {
@@ -122,14 +124,12 @@ export default class {
       return false;
     }
 
-    let cell = this.roundCells.vacants.find(x => x.cellType == charactor.cellType);
-    if (cell == null) {
-      cell = this.roundCells.vacants.find(x => x);
-    }
-
+    const cell = this.roundCells.vacants.find(x => x.cellRole == charactor.cellRole)
+              || this.roundCells.vacants.find(x => x);
     if (cell != null) {
       cell.charactor = charactor;
       this.entryBoxCharactor(charactor);
+      this.entryPartyCharactor(charactor);
       return true;
     }
 
@@ -145,12 +145,13 @@ export default class {
       cell = this.allCells.find(x => x.charactor == obj);
     }
 
-    if (cell !== null && cell.charactor === null) {
+    if (cell !== null && cell.charactor == null) {
       return false;
     }
 
-    if (!this.isBoxCell(cell)) {
-      this.removeBoxCharactor(cell.charactor);
+    if (cell.cellType === CellType.POSITION_CELL) {
+      this.removeCharactor(this.roundBoxCells, cell.charactor);
+      this.removeCharactor(this.roundPartyCells, cell.charactor);
     }
 
     cell.clear();
@@ -158,14 +159,22 @@ export default class {
     return true;
   }
 
+  // セルからそのセルの含まれるリスト判定
+  determinCells(cell) {
+    return cell.cellType === CellType.POSITION_CELL ? this.allCells
+      : cell.cellType === CellType.BOX_CELL ? this.roundBoxCells
+        : this.roundPartyCells;
+  }
+
   // キャラをセルに割当て
-  allocateCharactor(charactor, cell) {
-    if (this.roundBoxCells.some(x => x == cell)) {
-      this.allocateBoxCharactor(charactor, cell);
+  allocate(charactor, cell) {
+    const cells = this.determinCells(cell);
+
+    const existedCell = cells.find(x => x.charactor == charactor)
+    if (existedCell != null) {
+      existedCell.swap(cell);
     } else {
-      this.removeCharactor(charactor);
       cell.charactor = charactor;
-      this.entryBoxCharactor(charactor);
     }
 
     return true;
@@ -178,49 +187,18 @@ export default class {
       return false;
     }
 
-    const isSrcBox = this.isBoxCell(srcCell);
-    const isDstBox = this.isBoxCell(dstCell);
-
-    if (isSrcBox === isDstBox) {
+    if (srcCell.cellType === dstCell.cellType) {
       srcCell.swap(dstCell);
     } else if (srcCell.charactor) {
-      if (isSrcBox) {
-        // BOX -> 配置
-        this.allocateCharactor(srcCell.charactor, dstCell);
-      } else {
-        // 配置 -> BOX
-        this.allocateBoxCharactor(srcCell.charactor, dstCell)
-      }
+      this.allocate(srcCell.charactor, dstCell);
     }
 
     return true;
-  }
-
-  // キャラ削除
-  removeCharactor(charactor) {
-    const existedCell = this.allCells.find(x => x.charactor === charactor);
-    if (existedCell == null) {
-      return false;
-    }
-
-    existedCell.clear();
-
-    return true;
-  }
-
-  // キャラをBOXセルに割当て
-  allocateBoxCharactor(charactor, cell) {
-    const existedCell = this.roundBoxCells.find(x => x.charactor == charactor)
-    if (existedCell != null) {
-      existedCell.swap(cell);
-    } else {
-      cell.charactor = charactor;
-    }
   }
 
   // BOX可でBOXに入ってなかったら突っ込む
   entryBoxCharactor(charactor) {
-    if (charactor.canBox && !this.roundBoxCells.some(x => x.charactor == charactor)) {
+    if (charactor.canBox && !this.roundBoxCells.some(x => x.charactor === charactor)) {
       const cell = this.roundBoxCells.find(x => x.isVacant);
       if (cell != null) {
         cell.charactor = charactor;
@@ -228,12 +206,24 @@ export default class {
     }
   }
 
-  // BOXに入ってたら削除
-  removeBoxCharactor(charactor) {
-    const cells = this.getRoundBoxCells(charactor);
-    if (cells != null) {
-      const existedBoxCell = cells.find(x => x.charactor == charactor);
-      existedBoxCell.clear();
+  // PTに入ってなかったら突っ込む
+  entryPartyCharactor(charactor) {
+    if (!this.roundPartyCells.some(x => x.charactor === charactor)) {
+      const cell = this.roundPartyCells.find(x => x.isVacant);
+      if (cell != null) {
+        cell.charactor = charactor;
+      }
     }
+  }
+
+  // 入ってたら削除
+  removeCharactor(cells, charactor) {
+    const existedBoxCell = cells.find(x => x.charactor == charactor);
+    if (existedBoxCell != null) {
+      existedBoxCell.clear();
+      return true;
+    }
+
+    return false;
   }
 }

@@ -1,5 +1,5 @@
 
-import { CellModel, CellType, CellArray } from '../model/models';
+import { CellModel, CellRole, CellArray, CellType } from '../model/models';
 
 export default class {
   getCells() {
@@ -12,25 +12,25 @@ export default class {
 
     const cells = new CellArray();
     for (let i = 0; i < 114; i++) {
-      const cell = new CellModel();
+      const cell = new CellModel(CellType.POSITION_CELL);
       cells.push(cell);
       if (blockCells.indexOf(i) > -1) {
-        cell.cellType = CellType.BLOCK;
+        cell.cellRole = CellRole.BLOCK;
       }
       if (targetCells.indexOf(i) > -1) {
-        cell.cellType = CellType.TARGET;
+        cell.cellRole = CellRole.TARGET;
       }
       if (oneCellCells.indexOf(i) > -1) {
-        cell.cellType = CellType.ONE_CELL;
+        cell.cellRole = CellRole.ONE_CELL;
       }
       if (twoCellCells.indexOf(i) > -1) {
-        cell.cellType = CellType.TWO_CELL;
+        cell.cellRole = CellRole.TWO_CELL;
       }
       if (spporterCells.indexOf(i) > -1) {
-        cell.cellType = CellType.SUPPORTER;
+        cell.cellRole = CellRole.SUPPORTER;
       }
       if (dancerCells.indexOf(i) > -1) {
-        cell.cellType = CellType.DANCER;
+        cell.cellRole = CellRole.DANCER;
       }
     }
 
@@ -39,10 +39,19 @@ export default class {
 
   getBoxCells() {
     const cells = new CellArray();
-    for (let cell of [...Array(8).keys()].map(x => new CellModel())) {
+    for (let cell of [...Array(8).keys()].map(x => new CellModel(CellType.BOX_CELL))) {
       cells.push(cell);
     }
-    
+
+    return cells;
+  }
+
+  getPartyCells() {
+    const cells = new CellArray();
+    for (let cell of [...Array(16).keys()].map(x => new CellModel(CellType.PARTY_CELL))) {
+      cells.push(cell);
+    }
+
     return cells;
   }
 };

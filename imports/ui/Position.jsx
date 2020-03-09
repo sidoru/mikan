@@ -15,8 +15,10 @@ import IconButton from '@material-ui/core/IconButton';
 import InboxIcon from '@material-ui/icons/Inbox';
 import CloseIcon from '@material-ui/icons/Close';
 import Snackbar from '@material-ui/core/Snackbar';
+import Checkbox from '@material-ui/core/Checkbox';
+import FormControlLabel from '@material-ui/core/FormControlLabel';
 
-import { CharactorModel, CellModel, CellType } from '../model/models';
+import { CharactorModel, CellModel, CellRole } from '../model/models';
 import { Schedules } from '../api/collections';
 import PositionBoardModel from '../model/PositionBoardModel';
 import Helper from './Helper';
@@ -28,6 +30,7 @@ export default function ({ match }) {
   const [listDialogOpen, setListDialogOpen] = React.useState(false);
   const [message, setMessage] = React.useState({});
   const [selectedCharactor, setSelectedCharactor] = React.useState(null);
+  const [isDisplayCharackterName, setIsDisplayCharackterName] = React.useState(false);
 
   const scheduleId = match.params.scheduleId;
   const { schedule } = useTracker(() => {
@@ -44,7 +47,7 @@ export default function ({ match }) {
     return (<div></div>);
   }
 
-  model.applySchedule(schedule);
+  model.apply(schedule.positions);
   model.round = tabIndex;
 
   // ドラッグ中にデータが変わったらドラッグ中断
@@ -116,8 +119,8 @@ export default function ({ match }) {
     } else if (dragItem instanceof CharactorModel) {
       if (model.isExistAccount(dragItem)) {
         showMessage(`このキャラのアカウントは既に参加してます。`);
-      }else{
-        changed = model.allocateCharactor(dragItem, dstCell);
+      } else {
+        changed = model.allocate(dragItem, dstCell);
       }
     }
 
@@ -136,7 +139,7 @@ export default function ({ match }) {
 
   // セル変更時
   const onCellChanged = () => {
-    const positions = model.getPostionInfo();
+    const positions = model.getPostions();
     Meteor.call('schedules.updatePosition', schedule._id, positions);
   }
 
@@ -147,10 +150,20 @@ export default function ({ match }) {
     onCellChanged();
   }
 
+  // ラウンド入れ替え
+  const handleSwapRound = () => {
+    model.swapRound();
+    onCellChanged();
+  }
+  // キャラ名表示
+  const handleIsDisplayCharackterNameChange = ()=> event =>{
+    setIsDisplayCharackterName(event.target.checked);
+  }
+
   // セルコンテナ
-  const CellContainer = ({ cells, cellWaterMark }) => {
+  const CellContainer = ({ cells, cellWaterMark, className }) => {
     return (
-      <div className="cell-container clear">
+      <div className={className}>
         {cells.map((cell, index) =>
           <Cell key={index} cell={cell} cellWaterMark={cellWaterMark} />
         )}
@@ -165,7 +178,8 @@ export default function ({ match }) {
       selectedClassName = "accent";
     }
 
-    const className = ['box', cellTypeToClass(cell.cellType), selectedClassName].join(' ');
+    const className = ['box', cellRoleToClass(cell.cellRole), selectedClassName].join(' ');
+    const text = (cell.charactor == null) ? "" : isDisplayCharackterName ? cell.charactor.charactorName : cell.charactor.name;
     return (
       <div
         className={className}
@@ -181,7 +195,7 @@ export default function ({ match }) {
           {
             (cellWaterMark !== undefined && cell.isVacant)
               ? <div className="text-water-mark">{cellWaterMark}</div>
-              : cell.text
+              : text
           }
         </div>
       </div>
@@ -212,8 +226,9 @@ export default function ({ match }) {
       selectedClassName = "accent";
     }
 
-    const className = ['charactor-name', cellTypeToClass(charactor.cellType), selectedClassName].join(' ');
+    const className = ['charactor-name', cellRoleToClass(charactor.cellRole), selectedClassName].join(' ');
     const color = (charactor.entryRound == 0) ? "primary" : "secondary";
+    const text = isDisplayCharackterName ? charactor.charactorName : charactor.name;
 
     return (
       <Badge key={charactor.Id}
@@ -228,7 +243,7 @@ export default function ({ match }) {
           onMouseLeave={e => setSelectedCharactor(null)}
           onDoubleClick={e => handleCharactorDoubleClick(charactor)}
           onDragStart={e => handleCharactorDragstart(e, charactor)}>
-          {charactor.name}
+          {text}
         </div>
       </Badge>
     );
@@ -239,7 +254,7 @@ export default function ({ match }) {
   return (
     <div>
       <Paper square>
-        <div style={{ display: "inline-block", margin: "0px 20px" }}>
+        <div style={{ display: "inline-block", margin: "0px 80px" }}>
           {executionDate}
         </div>
         <div style={{ display: "inline-block" }}>
@@ -255,14 +270,38 @@ export default function ({ match }) {
       </Paper>
       <TabPanel value={tabIndex} index={0}>
         <div>
-          <CellContainer cells={model.assortedCells[0]} />
-          <CellContainer cells={model.assortedBoxCells[0]} cellWaterMark="BOX" />
+          <div className="cell-container-group">
+            <div style={{ display: "inline-block" }}>
+              <CellContainer cells={model.assortedCells[0]} className="cell-container clear" />
+              <CellContainer cells={model.assortedBoxCells[0]} cellWaterMark="BOX" className="cell-container clear" />
+            </div>
+            <div style={{ display: "inline-block" }}>
+              <div className="party-title">PT1</div>
+              <CellContainer cells={model.assortedPartyCells[0].slice(0, 7)} cellWaterMark="PT1" className="party-cell-container clear " />
+            </div>
+            <div style={{ display: "inline-block" }}>
+              <div className="party-title">PT2</div>
+              <CellContainer cells={model.assortedPartyCells[0].slice(8, 15)} cellWaterMark="PT2" className="party-cell-container clear" />
+            </div>
+          </div>
         </div>
       </TabPanel>
       <TabPanel value={tabIndex} index={1}>
         <div>
-          <CellContainer cells={model.assortedCells[1]} />
-          <CellContainer cells={model.assortedBoxCells[1]} cellWaterMark="BOX" />
+          <div className="cell-container-group">
+            <div style={{ display: "inline-block" }}>
+              <CellContainer cells={model.assortedCells[1]} className="cell-container clear" />
+              <CellContainer cells={model.assortedBoxCells[1]} cellWaterMark="BOX" className="cell-container clear" />
+            </div>
+            <div style={{ display: "inline-block" }}>
+              <div className="party-title">PT1</div>
+              <CellContainer cells={model.assortedPartyCells[1].slice(0, 7)} cellWaterMark="PT1" className="party-cell-container clear " />
+            </div>
+            <div style={{ display: "inline-block" }}>
+              <div className="party-title">PT2</div>
+              <CellContainer cells={model.assortedPartyCells[1].slice(8, 15)} cellWaterMark="PT2" className="party-cell-container clear" />
+            </div>
+          </div>
         </div>
       </TabPanel>
       <div className="pl-container">
@@ -272,6 +311,20 @@ export default function ({ match }) {
       </div>
 
       <Button variant="outlined" color="primary" onClick={e => setListDialogOpen(true)}>別の日の配置をコピー</Button>
+      <Button variant="outlined" color="primary" onClick={e => handleSwapRound()}>1回目と2回目入替</Button>
+      
+      <FormControlLabel
+        style={{marginLeft:"auto"}}
+        control={
+          <Checkbox
+            checked={isDisplayCharackterName}
+            onChange={handleIsDisplayCharackterNameChange()}
+            color="primary"
+          />
+        }
+        label="キャラ名を表示"
+      />
+
       <ScheduleListDialog
         open={listDialogOpen}
         onClose={e => setListDialogOpen(false)}
@@ -283,13 +336,13 @@ export default function ({ match }) {
 }
 
 // セルタイプをcssクラスに変換
-cellTypeToClass = ct =>
-  ct == CellType.BLOCK ? "block" :
-    ct == CellType.TARGET ? "target" :
-      ct == CellType.ONE_CELL ? "one-cell" :
-        ct == CellType.TWO_CELL ? "two-cell" :
-          ct == CellType.SUPPORTER ? "supporter" :
-            ct == CellType.DANCER ? "dancer" : "";
+const cellRoleToClass = ct =>
+  ct == CellRole.BLOCK ? "block" :
+    ct == CellRole.TARGET ? "target" :
+      ct == CellRole.ONE_CELL ? "one-cell" :
+        ct == CellRole.TWO_CELL ? "two-cell" :
+          ct == CellRole.SUPPORTER ? "supporter" :
+            ct == CellRole.DANCER ? "dancer" : "";
 
 // 予定リストのダイアログ
 function ScheduleListDialog({ open, onClose, onSelected, exclusionId }) {
@@ -314,7 +367,6 @@ function ScheduleListDialog({ open, onClose, onSelected, exclusionId }) {
   }
 
   return (
-
     <ResponsiveDialog
       fullWidth={true}
       onClose={onClose}

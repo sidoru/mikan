@@ -2,8 +2,8 @@
 // 何かしらexport defaultしてたらオブジェクトリテラルをexportできた
 export default dummy = {};
 
-// セルの種類
-export const CellType = {
+// セルの役割
+export const CellRole = {
   NONE: 0,
   ONE_CELL: 1,
   TWO_CELL: 2,
@@ -11,6 +11,13 @@ export const CellType = {
   TARGET: 4,
   SUPPORTER: 5,
   DANCER: 6,
+};
+
+// セルの種類
+export const CellType = {
+  POSITION_CELL: 1,
+  BOX_CELL: 2,
+  PARTY_CELL: 3,
 };
 
 // リネのクラス
@@ -56,11 +63,11 @@ export class PlayerModel {
 }
 
 export class CharactorModel {
-  constructor(charactorName, nickname, accountId, lineageClass, cellType, levelIndex, canBox) {
+  constructor(charactorName, nickname, accountId, lineageClass, cellRole, levelIndex, canBox) {
     this.charactorName = charactorName;
     this.name = nickname;
     this.lineageClass = lineageClass;
-    this.cellType = cellType;
+    this.cellRole = cellRole;
     this.levelIndex = levelIndex;
     this.canBox = canBox;
     this.accountId = accountId;
@@ -95,8 +102,9 @@ export class PlayerArray extends Array {
 }
 
 export class CellModel {
-  constructor() {
-    this.cellType = CellType.NONE;
+  constructor(cellType) {
+    this.cellRole = CellRole.NONE;
+    this.cellType = cellType;
     this.charactor = null;
   }
 
