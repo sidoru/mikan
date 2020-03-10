@@ -19,10 +19,17 @@ html,body {
 	width: 200px;
 }
 
-.cell-container {
-	width: 590px;
-	margin: auto;
+.cell-container-group {
+	width: 730px;
+	margin:auto;
 }
+.cell-container {
+	width: 580px;
+}
+.party-cell-container {
+	width: 70px;
+}
+
 /* ひし形 */
 .box {
 	height: 40px;
@@ -46,8 +53,9 @@ html,body {
 	font-size: 13px;
   transform: rotate(-45deg);
   line-height: 12px;
-  font-weight: bold;
-  margin-top: -100px;
+	font-weight: bold;
+	word-wrap: break-word;
+	word-break: break-all;
 }
 
 .accent {
@@ -86,6 +94,20 @@ html,body {
 	.cell-container .box:nth-child(n+11) {
 		margin-top: -17px;
 	}
+}
+
+/* 2個目から2個ごとにマージン突っ込んで改行させる */
+.party-cell-container .box:nth-child(2n+2) {
+	margin-left: 29px;
+}
+/* 1個目から上にずらす（上のセルとセルの間に入る感じ） */
+.party-cell-container .box:nth-child(n+1) {
+	margin-top: -20px;
+}
+/* PT表記 セルの上に書くのでセルが上に寄ってる分上に */
+.party-title {
+	margin-left: 25px;
+	margin-bottom: 25px;
 }
 
 .clear::after {
