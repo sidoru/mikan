@@ -18,12 +18,6 @@ export default class {
       this.allCells.push(cell);
     }
 
-    // 全PTセル BOXだけ面倒で作ってない
-    this.allPartyCells = new CellArray();
-    for (let cell of this.assortedPartyCells.reduce((x, y) => [...x, ...y], [])) {
-      this.allPartyCells.push(cell);
-    }
-
     const playerPepos = new PlayerRepository();
     this.players = playerPepos.getPlayers();
 
@@ -102,7 +96,8 @@ export default class {
   // 1回目と2回目入れ替え
   swapRound() {
     const positions = this.getPostions();
-    this.apply([positions[1], positions[0]]);
+    this.apply(positions);
+    console.log(positions);
   }
 
   isExistCharactorOtherRound(charactor) {
