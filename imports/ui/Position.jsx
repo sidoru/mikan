@@ -146,7 +146,7 @@ export default function ({ match }) {
   // コピー一覧の選択時
   const handleScheduleListSelected = selectedSchedule => {
     setListDialogOpen(false);
-    model.applySchedule(selectedSchedule);
+    model.apply(selectedSchedule.positions);
     onCellChanged();
   }
 
