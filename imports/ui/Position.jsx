@@ -277,11 +277,11 @@ export default function ({ match }) {
             </div>
             <div style={{ display: "inline-block" }}>
               <div className="party-title">PT1</div>
-              <CellContainer cells={model.assortedPartyCells[0].slice(0, 7)} cellWaterMark="PT1" className="party-cell-container clear " />
+              <CellContainer cells={model.assortedPartyCells[0].slice(0, 8)} cellWaterMark="PT1" className="party-cell-container clear " />
             </div>
             <div style={{ display: "inline-block" }}>
               <div className="party-title">PT2</div>
-              <CellContainer cells={model.assortedPartyCells[0].slice(8, 15)} cellWaterMark="PT2" className="party-cell-container clear" />
+              <CellContainer cells={model.assortedPartyCells[0].slice(8, 16)} cellWaterMark="PT2" className="party-cell-container clear" />
             </div>
           </div>
         </div>
@@ -295,11 +295,11 @@ export default function ({ match }) {
             </div>
             <div style={{ display: "inline-block" }}>
               <div className="party-title">PT1</div>
-              <CellContainer cells={model.assortedPartyCells[1].slice(0, 7)} cellWaterMark="PT1" className="party-cell-container clear " />
+              <CellContainer cells={model.assortedPartyCells[1].slice(0, 8)} cellWaterMark="PT1" className="party-cell-container clear " />
             </div>
             <div style={{ display: "inline-block" }}>
               <div className="party-title">PT2</div>
-              <CellContainer cells={model.assortedPartyCells[1].slice(8, 15)} cellWaterMark="PT2" className="party-cell-container clear" />
+              <CellContainer cells={model.assortedPartyCells[1].slice(8, 16)} cellWaterMark="PT2" className="party-cell-container clear" />
             </div>
           </div>
         </div>
