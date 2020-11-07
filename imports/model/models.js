@@ -42,6 +42,7 @@ export const LineageClassInfo = [
   { lineageClass: LineageClass.WAR, shortName: "戦", sourceName: "戦士" },
   { lineageClass: LineageClass.DRK, shortName: "DRK", sourceName: "DRK" },
   { lineageClass: LineageClass.DE, shortName: "DE", sourceName: "DE" },
+  { lineageClass: LineageClass.FE, shortName: "剣", sourceName: "剣士" },
   { lineageClass: LineageClass.PRI, shortName: "P", sourceName: "プリ" },
   { lineageClass: LineageClass.ILL, shortName: "ILL", sourceName: "ILL" },
   { lineageClass: LineageClass.ELF_FIRE, shortName: "火", sourceName: "エルフ(火)" },
