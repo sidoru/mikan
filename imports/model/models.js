@@ -33,6 +33,7 @@ export const LineageClass = {
   ELF_WIND: 9,
   ELF_WATER: 10,
   ELF_EARTH: 11,
+  FE: 12,
 };
 
 // クラスデータ
@@ -42,7 +43,7 @@ export const LineageClassInfo = [
   { lineageClass: LineageClass.WAR, shortName: "戦", sourceName: "戦士" },
   { lineageClass: LineageClass.DRK, shortName: "DRK", sourceName: "DRK" },
   { lineageClass: LineageClass.DE, shortName: "DE", sourceName: "DE" },
-  { lineageClass: LineageClass.FE, shortName: "剣", sourceName: "剣士" },
+  { lineageClass: LineageClass.FE, shortName: "剣", sourceName: "フェンサー" },
   { lineageClass: LineageClass.PRI, shortName: "P", sourceName: "プリ" },
   { lineageClass: LineageClass.ILL, shortName: "ILL", sourceName: "ILL" },
   { lineageClass: LineageClass.ELF_FIRE, shortName: "火", sourceName: "エルフ(火)" },
